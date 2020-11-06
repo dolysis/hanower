@@ -1,28 +1,27 @@
+use std::mem;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "hanoi")]
-struct Options {
+struct Opts {
     #[structopt(short, long)]
     debug: bool,
 
-    #[structopt(short, long, default_value = "1")]
-    start: usize,
+    #[structopt(short, long, default_value = "10.0")]
+    start: f64,
 
-    #[structopt(short, long, default_value = "2.0")]
-    end: usize,
+    #[structopt(short, long, default_value = "100.0")]
+    end: f64,
 
-    #[structopt(short, long, default_value = "2.0")]
+    #[structopt(short, long, default_value = "2")]
     number: usize,
 }
 
 fn find_fenceposts(mut start: f64, mut end: f64, gaps: usize) -> Vec<f64> {
     // swaps start and end values if they are incorrectly sized
     if start > end {
-        let placehold_start = start;
-        start = end;
-        end = placehold_start;
-        println!("start and end values swapped");
+        mem::swap(&mut start, &mut end);
+        println!("Start and end values swapped.");
     }
 
     if gaps == 2 {
@@ -50,8 +49,8 @@ fn find_fenceposts(mut start: f64, mut end: f64, gaps: usize) -> Vec<f64> {
 }
 
 fn main() {
-    let opt = Options::from_args();
+    let opt = Opts::from_args();
     println!("{:#?}", opt);
 
-    find_fenceposts(16.0, 15.0, 4);
+    find_fenceposts(opt.start, opt.end, opt.number);
 }
