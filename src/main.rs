@@ -1,3 +1,6 @@
+use csv;
+// use std::collections::BinaryHeap;
+use std::error::Error;
 use std::mem;
 use structopt::StructOpt;
 
@@ -32,11 +35,9 @@ fn find_fenceposts(mut start: f64, mut end: f64, gaps: usize) -> Vec<f64> {
     } else if gaps > 2 {
         // scale end value down according to start value
         // start must always move down to 1.0
-        let scaled_end = end - start + 1.0;
+        // let scaled_end = end - start + 1.0;
 
-        // get fencepost incremental amount
-        let increment = scaled_end.ln() / gaps as f64;
-
+        let increment = (end - start + 1.0).ln() / gaps as f64;
         let mut return_vec = vec![0.0];
         let mut increment_value = 0.0;
         // iterate over desired length of return vector (== gaps)
@@ -56,17 +57,34 @@ fn find_fenceposts(mut start: f64, mut end: f64, gaps: usize) -> Vec<f64> {
 // uses find_fenceposts() vec to identify buckets
 // and then pulls the index number & row data from the max index
 // in those buckets
-//      placeholder return type
-fn max_bucket_value(fence_vec: Vec<f64>) -> f64 {
-    let min = fence_vec[0];
-    let max = fence_vec[Opts::from_args().number];
+fn bucket_maxes(fence_vec: Vec<f64>, file: String) -> Vec<f64> {
+    let _min = fence_vec[0];
+    let _max = fence_vec[Opts::from_args().number];
 
-    return 4.20; //placeholder return value
+    if let Err(e) = read_csv(file) {
+        eprintln!("{}", e);
+    }
+
+    return vec![0.0, 99.0]; //placeholder return
+}
+
+fn read_csv(path: String) -> Result<Vec<f64>, Box<dyn Error>> {
+    let mut reader = csv::Reader::from_path(path)?;
+    let mut index_vec = vec![0.0];
+
+    for result in reader.records() {
+        let record = result?;
+        let value: f64 = record[0].parse().unwrap();
+        index_vec.push(value);
+    }
+
+    Ok(index_vec)
 }
 
 fn main() {
     let opt = Opts::from_args();
     // println!("{:#?}", opt);
 
-    find_fenceposts(opt.start, opt.end, opt.number);
+    let fence_vec = find_fenceposts(opt.start, opt.end, opt.number);
+    bucket_maxes(fence_vec, opt.file);
 }
