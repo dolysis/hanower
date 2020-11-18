@@ -49,7 +49,7 @@ fn find_fenceposts(mut start: f64, mut end: f64, gaps: usize) -> Vec<f64> {
 
         return return_vec;
     } else {
-        println!("Gaps too small.");
+        println!("Gaps value too small.");
         return vec![start, end];
     }
 }
@@ -58,11 +58,15 @@ fn find_fenceposts(mut start: f64, mut end: f64, gaps: usize) -> Vec<f64> {
 // and then pulls the index number & row data from the max index
 // in those buckets
 fn bucket_maxes(fence_vec: Vec<f64>, file: String) -> Vec<f64> {
-    let _min = fence_vec[0];
-    let _max = fence_vec[Opts::from_args().number];
+    match read_csv(file) {
+        Err(e) => eprintln!("{}", e),
+        Ok(index_vec) => {
+            let _min = fence_vec[0];
+            let _max = fence_vec[Opts::from_args().number - 1];
+            let _bucket_vec: Vec<f64> = vec![];
 
-    if let Err(e) = read_csv(file) {
-        eprintln!("{}", e);
+            return index_vec; //placeholder return
+        }
     }
 
     return vec![0.0, 99.0]; //placeholder return
