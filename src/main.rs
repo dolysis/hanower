@@ -1,7 +1,7 @@
 use csv;
 // use std::collections::BinaryHeap;
+use anyhow::{bail as error, ensure, Error as AnyError};
 use std::error::Error;
-use std::mem;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -23,16 +23,13 @@ struct Opts {
     file: String,
 }
 
-fn find_fenceposts(mut start: f64, mut end: f64, gaps: u64) -> Vec<f64> {
-    // swaps start and end values if they are incorrectly sized
-    if start > end {
-        mem::swap(&mut start, &mut end);
-        println!("Start and end values swapped.");
-    }
+fn find_fenceposts(start: f64, end: f64, gaps: u64) -> Result<Vec<f64>, AnyError> {
+    ensure!(start < end, "Start must be smaller than End");
+    ensure!(gaps >= 2, "Gaps must be >= 2.");
 
     if gaps == 2 {
-        return vec![start, end];
-    } else if gaps > 2 {
+        return Ok(vec![start, end]);
+    } else {
         // scale end value down according to start value
         // start must always move down to 1.0
         // let scaled_end = end - start + 1.0;
@@ -47,50 +44,47 @@ fn find_fenceposts(mut start: f64, mut end: f64, gaps: u64) -> Vec<f64> {
             return_vec.push(increment_value);
         }
 
-        return return_vec;
-    } else {
-        println!("Gaps value too small.");
-        return vec![start, end];
+        return Ok(return_vec);
     }
 }
 
 // uses find_fenceposts() vec to identify buckets
 // and then pulls the index number & row data from the max index
 // in those buckets
-fn bucket_maxes(fence_vec: Vec<f64>, file: String) -> Vec<f64> {
-    match read_csv(file) {
-        Err(e) => eprintln!("{}", e),
-        Ok(index_vec) => {
-            let _min = fence_vec[0];
-            let _max = fence_vec[(Opts::from_args().number as usize) - 1];
-            let _bucket_vec: Vec<f64> = vec![];
+// fn bucket_maxes(fence_vec: Vec<f64>, file: String) -> Vec<f64> {
+//     match read_csv(file) {
+//         Err(e) => eprintln!("{}", e),
+//         Ok(index_vec) => {
+//             let _min = fence_vec[0];
+//             let _max = fence_vec[(Opts::from_args().number as usize) - 1];
+//             let _bucket_vec: Vec<f64> = vec![];
 
-            return index_vec; //placeholder return
-        }
-    }
+//             return index_vec; //placeholder return
+//         }
+//     }
 
-    return vec![0.0, 99.0]; //placeholder return
-}
+//     return vec![0.0, 99.0]; //placeholder return
+// }
 
-fn read_csv(path: String) -> Result<Vec<f64>, Box<dyn Error>> {
-    let mut reader = csv::Reader::from_path(path)?;
-    let mut index_vec = vec![0.0];
+// fn read_csv(path: String) -> Result<Vec<f64>, Box<dyn Error>> {
+//     let mut reader = csv::Reader::from_path(path)?;
+//     let mut index_vec = vec![0.0];
 
-    for result in reader.records() {
-        let record = result?;
-        let value: f64 = record[0].parse().unwrap();
-        index_vec.push(value);
-    }
+//     for result in reader.records() {
+//         let record = result?;
+//         let value: f64 = record[0].parse().unwrap();
+//         index_vec.push(value);
+//     }
 
-    Ok(index_vec)
-}
+//     Ok(index_vec)
+// }
 
 fn main() {
     let opt = Opts::from_args();
     // println!("{:#?}", opt);
 
-    let fence_vec = find_fenceposts(opt.start, opt.end, opt.number);
-    bucket_maxes(fence_vec, opt.file);
+    // let fence_vec = find_fenceposts(opt.start, opt.end, opt.number);
+    // bucket_maxes(fence_vec, opt.file);
 }
 
 #[cfg(test)]
@@ -100,8 +94,6 @@ mod tests {
     // All functions (excluding main), structs and traits that are defined above
     // can be used in this module
     use super::*;
-
-    use anyhow::{bail as error, Error as AnyError};
 
     /// Typedef of the Results our #[test] functions return
     type TestResult = std::result::Result<(), AnyError>;
@@ -173,13 +165,7 @@ mod tests {
     /// TODO: replace the insides of the function with one that passes all of the tests below
     fn fence_fn(args: FenceArgs) -> Result<Vec<f64>, AnyError> {
         #[allow(unused_variables)]
-        let your_fn = |start, end, count| {
-            todo!(
-                "Replace me with a function that finds the fences, \
-             using the given arguments and returning a type compatible \
-             with this function's returned value"
-            )
-        };
+        let your_fn = |start, end, count| find_fenceposts(start, end, count);
 
         your_fn(args.start, args.end, args.count)
     }
