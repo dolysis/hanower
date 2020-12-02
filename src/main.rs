@@ -173,7 +173,13 @@ mod tests {
     /// TODO: replace the insides of the function with one that passes all of the tests below
     fn fence_fn(args: FenceArgs) -> Result<Vec<f64>, AnyError> {
         #[allow(unused_variables)]
-        let your_fn = |start, end, count| error!("Make a test pass");
+        let your_fn = |start, end, count| {
+            todo!(
+                "Replace me with a function that finds the fences, \
+             using the given arguments and returning a type compatible \
+             with this function's returned value"
+            )
+        };
 
         your_fn(args.start, args.end, args.count)
     }
