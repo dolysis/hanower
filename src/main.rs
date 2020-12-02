@@ -17,13 +17,13 @@ struct Opts {
     end: f64,
 
     #[structopt(default_value = "2")]
-    number: usize,
+    number: u64,
 
     #[structopt(short, long)]
     file: String,
 }
 
-fn find_fenceposts(mut start: f64, mut end: f64, gaps: usize) -> Vec<f64> {
+fn find_fenceposts(mut start: f64, mut end: f64, gaps: u64) -> Vec<f64> {
     // swaps start and end values if they are incorrectly sized
     if start > end {
         mem::swap(&mut start, &mut end);
@@ -62,7 +62,7 @@ fn bucket_maxes(fence_vec: Vec<f64>, file: String) -> Vec<f64> {
         Err(e) => eprintln!("{}", e),
         Ok(index_vec) => {
             let _min = fence_vec[0];
-            let _max = fence_vec[Opts::from_args().number - 1];
+            let _max = fence_vec[(Opts::from_args().number as usize) - 1];
             let _bucket_vec: Vec<f64> = vec![];
 
             return index_vec; //placeholder return
