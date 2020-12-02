@@ -101,8 +101,8 @@ mod tests {
     // can be used in this module
     use super::*;
 
-    /// Catch all error type, can easily use '?' and .into() with it
-    type AnyError = Box<dyn std::error::Error + Send + 'static>;
+    use anyhow::{bail as error, Error as AnyError};
+
     /// Typedef of the Results our #[test] functions return
     type TestResult = std::result::Result<(), AnyError>;
 
@@ -173,13 +173,7 @@ mod tests {
     /// TODO: replace the insides of the function with one that passes all of the tests below
     fn fence_fn(args: FenceArgs) -> Result<Vec<f64>, AnyError> {
         #[allow(unused_variables)]
-        let your_fn = |start, end, count| {
-            todo!(
-                "Replace me with a function that finds the fences, \
-             using the given arguments and returning a type compatible \
-             with this function's returned value"
-            )
-        };
+        let your_fn = |start, end, count| error!("Make a test pass");
 
         your_fn(args.start, args.end, args.count)
     }
@@ -199,7 +193,7 @@ mod tests {
         // Assert that bad inputs lead to an error
         assert!(test.is_err());
 
-        test.map(|_| ())
+        Ok(())
     }
 
     #[test]
@@ -215,7 +209,7 @@ mod tests {
         // Assert that a bad count leads to an error
         assert!(test.is_err());
 
-        test.map(|_| ())
+        Ok(())
     }
 
     #[test]
@@ -241,7 +235,7 @@ mod tests {
                         idx, expected, rounded, actual, expected_list, actual_list
                     );
 
-                    error(msg)?;
+                    error!(msg);
                 }
 
                 Ok(())
@@ -260,15 +254,10 @@ mod tests {
         if let false = actual == expected {
             let msg = format!("Expected {} fences, but received: {}", expected, actual);
 
-            return error(msg);
+            error!(msg);
         }
 
         Ok(())
-    }
-
-    fn error(msg: impl ToString) -> TestResult {
-        let err: Box<dyn std::error::Error + Send + Sync + 'static> = Box::from(msg.to_string());
-        Err(err)
     }
 
     fn test_data() -> Vec<(FenceArgs, Vec<i64>)> {
