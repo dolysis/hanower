@@ -9,6 +9,4 @@ edition = "2018"
 [dependencies]
 structopt = "0.3"
 csv = "1.1"
-
-[dev-dependencies]
 anyhow = "1.0"
