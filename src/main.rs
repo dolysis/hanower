@@ -1,7 +1,7 @@
-use csv;
+// use csv;
 // use std::collections::BinaryHeap;
 use anyhow::{bail as error, ensure, Error as AnyError};
-use std::error::Error;
+// use std::error::Error;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -33,15 +33,15 @@ fn find_fenceposts(start: f64, end: f64, gaps: u64) -> Result<Vec<f64>, AnyError
         // scale end value down according to start value
         // start must always move down to 1.0
         // let scaled_end = end - start + 1.0;
+        let nlog = (end - start + 1.0).ln() / gaps as f64;
+        let mut return_vec = vec![];
 
-        let increment = (end - start + 1.0).ln() / gaps as f64;
-        let mut return_vec = vec![0.0];
-        let mut increment_value = 0.0;
         // iterate over desired length of return vector (== gaps)
         // fill in the incremental fencepost values
-        for _n in 0..=gaps {
-            increment_value = increment_value + increment;
-            return_vec.push(increment_value);
+        for indx in 1..=gaps {
+            let expo = (nlog * indx as f64).exp();
+            let post = expo + start - 1.0;
+            return_vec.push(post);
         }
 
         return Ok(return_vec);
@@ -80,7 +80,7 @@ fn find_fenceposts(start: f64, end: f64, gaps: u64) -> Result<Vec<f64>, AnyError
 // }
 
 fn main() {
-    let opt = Opts::from_args();
+    let _opt = Opts::from_args();
     // println!("{:#?}", opt);
 
     // let fence_vec = find_fenceposts(opt.start, opt.end, opt.number);
@@ -258,7 +258,7 @@ mod tests {
             (
                 FenceArgs::new(100.0, 1000.0, 15),
                 vec![
-                    101, 102, 103, 105, 109, 114, 123, 137, 158, 192, 246, 330, 462, 672, 1000,
+                    101, 101, 103, 105, 109, 114, 123, 137, 158, 192, 246, 330, 463, 671, 1000,
                 ],
             ),
             (
