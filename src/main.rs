@@ -1,7 +1,7 @@
 // use csv;
 // use std::collections::BinaryHeap;
-use anyhow::{bail as error, ensure, Error as AnyError};
-// use std::error::Error;
+use std::{fmt, io};
+
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -23,30 +23,70 @@ struct Opts {
     file: String,
 }
 
-fn find_fenceposts(start: f64, end: f64, gaps: u64) -> Result<Vec<f64>, AnyError> {
-    ensure!(start < end, "Start must be smaller than End");
-    ensure!(gaps >= 2, "Gaps must be >= 2.");
+#[derive(Debug, Clone, Copy)]
+pub struct Interval {
+    low: f64,
+    high: f64,
+    count: u64,
+}
 
-    if gaps == 2 {
-        return Ok(vec![start, end]);
-    } else {
-        // scale end value down according to start value
-        // start must always move down to 1.0
-        // let scaled_end = end - start + 1.0;
-        let nlog = (end - start + 1.0).ln() / gaps as f64;
-        let mut return_vec = vec![];
+impl Interval {
+    /// Create a new Interval, with the range `low..=high`, split into `count`
+    /// number of intervals
+    pub fn new(low: f64, high: f64, count: u64) -> Result<Self, IntervalError> {
+        // TODO: Somehow ensure that only acceptable low, high, and count values
+        // are converted into a useable Interval. Return an IntervalError otherwise
+        todo!()
+    }
 
-        // iterate over desired length of return vector (== gaps)
-        // fill in the incremental fencepost values
-        for indx in 1..=gaps {
-            let expo = (nlog * indx as f64).exp();
-            let post = expo + start - 1.0;
-            return_vec.push(post);
+    /// Calculate a set of intervals based on the low and high points of
+    /// this Interval
+    pub fn intervals(&self) -> Vec<f64> {
+        debug_assert!(self.low < self.high, "Low must be less than high");
+        debug_assert!(self.count >= 2, "Interval count must be >= 2.");
+
+        if self.count == 2 {
+            vec![self.low, self.high]
+        } else {
+            let mut intervals = Vec::new();
+
+            // scale high value down according to low value
+            // low must always move down to 1.0
+            // let scaled_end = end - start + 1.0;
+            let nlog = (self.high - self.low + 1.0).ln() / self.count as f64;
+
+            // iterate over desired length of return vector (== count)
+            // fill in the incremental fencepost values
+            for idx in 1..=self.count {
+                let expo = (nlog * idx as f64).exp();
+                let post = expo + self.low - 1.0;
+                intervals.push(post);
+            }
+
+            intervals
         }
-
-        return Ok(return_vec);
     }
 }
+
+#[derive(Debug)]
+pub enum IntervalError {
+    /// The given count does not satisfy the requirements
+    LowCount(u64),
+    /// The given high and low points were invalid
+    InvalidRange,
+}
+
+impl fmt::Display for IntervalError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            // TODO: Replace with better error explanations
+            Self::LowCount(bad) => write!(f, "{}", bad),
+            Self::InvalidRange => write!(f, ""),
+        }
+    }
+}
+
+impl std::error::Error for IntervalError {}
 
 // uses find_fenceposts() vec to identify buckets
 // and then pulls the index number & row data from the max index
@@ -94,26 +134,12 @@ mod tests {
     // All functions (excluding main), structs and traits that are defined above
     // can be used in this module
     use super::*;
+    use anyhow::{bail as error, Error as AnyError};
 
     /// Typedef of the Results our #[test] functions return
     type TestResult = std::result::Result<(), AnyError>;
 
     /*
-     * You have two tasks:
-     *
-     *  * Pass the tests
-     *      1. Replace to the todo! in `fence_fn` with an actual function
-     *      2. Iterate until your function passes all three tests
-     *  * Change `FenceArgs` to only allow valid inputs
-     *      1. Implement `FenceArgs::try_new`
-     *      2. Move any error handling you can out of the fence function, as your inputs
-     *         are guaranteed to be valid
-     *
-     * Every time you complete something, remove the TODO. When all TODO's
-     * are gone, you've finished!
-     *
-     * -------------------------------------------------------------------------------------------
-     *
      * For reference this is how I calculated the expected values in `test_data`:
      *
      *  -- INPUTS
@@ -152,20 +178,15 @@ mod tests {
         fn new(start: f64, end: f64, count: u64) -> Self {
             Self { start, end, count }
         }
-
-        /// TODO: How could we only allow valid inputs to create a new Self?
-        #[allow(dead_code, unused_variables)]
-        fn try_new(start: f64, end: f64, count: u64) -> Result<Self, AnyError> {
-            unimplemented!("Work in progress!!")
-        }
     }
 
-    /// Wrapper function for passing around our actual fence post function
-    ///
-    /// TODO: replace the insides of the function with one that passes all of the tests below
+    /// Wrapper function for passing around our actual function
     fn fence_fn(args: FenceArgs) -> Result<Vec<f64>, AnyError> {
-        #[allow(unused_variables)]
-        let your_fn = |start, end, count| find_fenceposts(start, end, count);
+        let your_fn = |start, end, count| {
+            Interval::new(start, end, count)
+                .map(|i| i.intervals())
+                .map_err(Into::into)
+        };
 
         your_fn(args.start, args.end, args.count)
     }
@@ -174,9 +195,6 @@ mod tests {
 
     #[test]
     /// Checks that the fence function correctly detects and refuses invalid input values.
-    ///
-    /// TODO: Hmm, could we change the arguments passed into it to guarantee the inputs
-    /// are valid somehow?
     fn start_after_end_err() -> TestResult {
         let args = FenceArgs::new(10.0, 1.0, 5);
 
@@ -190,9 +208,6 @@ mod tests {
 
     #[test]
     /// Checks that the fence function correctly detects and refuses invalid count values
-    ///
-    /// TODO: Hmm, could we change the arguments passed into it to guarantee the inputs
-    /// are valid somehow?
     fn count_less_than_two_err() -> TestResult {
         let args = FenceArgs::new(1.0, 10.0, 1);
 
