@@ -34,9 +34,13 @@ impl Interval {
     /// Create a new Interval, with the range `low..=high`, split into `count`
     /// number of intervals
     pub fn new(low: f64, high: f64, count: u64) -> Result<Self, IntervalError> {
-        // TODO: Somehow ensure that only acceptable low, high, and count values
-        // are converted into a useable Interval. Return an IntervalError otherwise
-        todo!()
+        if low >= high {
+            return Err(IntervalError::InvalidRange);
+        } else if count < 2 {
+            return Err(IntervalError::LowCount(count));
+        } else {
+            Ok(Self { low, high, count })
+        }
     }
 
     /// Calculate a set of intervals based on the low and high points of
@@ -79,9 +83,12 @@ pub enum IntervalError {
 impl fmt::Display for IntervalError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            // TODO: Replace with better error explanations
-            Self::LowCount(bad) => write!(f, "{}", bad),
-            Self::InvalidRange => write!(f, ""),
+            Self::LowCount(bad) => write!(
+                f,
+                "Invalid count. Ensure `number` value is >= 2 (was: {})",
+                bad
+            ),
+            Self::InvalidRange => write!(f, "Invalid range. Ensure start is less than end"),
         }
     }
 }
