@@ -1,26 +1,48 @@
-use clap::Clap;
+use structopt::StructOpt;
 
-#[derive(Clap, Debug)]
-#[clap(version = "3.0.0-beta.2")]
+#[derive(StructOpt, Debug)]
+#[structopt(name = "hanoi")]
 struct Options {
-    #[clap(short, long, default_value = "1.0")]
+    #[structopt(short, long)]
+    debug: bool,
+
+    #[structopt(short, long, default_value = "1")]
     start: usize,
 
-    #[clap(short, long, default_value = "2.0")]
+    #[structopt(short, long, default_value = "2.0")]
     end: usize,
 
-    #[clap(short, long, default_value = "2")]
+    #[structopt(short, long, default_value = "2.0")]
     number: usize,
 }
 
-fn exponential_progression(a: f64, b: f64, c: usize) -> Vec<f64> {
-    if c == 2 {
-        println!("{:?}", vec![a, b]); // remove
-        return vec![a, b];
-    } else if c > 2 {
-        let steps = 1.0;
-        println!("{:?}", vec![a, steps, b]); // remove
-        return vec![a, steps, b];
+fn find_fenceposts(mut start: f64, mut end: f64, gaps: usize) -> Vec<f64> {
+    // swaps start and end values if they are incorrectly sized
+    if start > end {
+        let placehold_start = start;
+        start = end;
+        end = placehold_start;
+        println!("start and end values swapped");
+    }
+
+    if gaps == 2 {
+        return vec![start, end];
+    } else if gaps > 2 {
+        // scale end value down according to start value
+        // start must always move down to 1.0
+        let scaled_end = end - start + 1.0;
+
+        // get fencepost incremental amount
+        let increment = scaled_end.ln() / gaps as f64;
+
+        let mut return_vec = vec![0.0];
+        let mut increment_value = 0.0;
+        // iterate over desired length of return vector (== gaps)
+        // fill in the incremental fencepost values
+        for _n in 0..=gaps {
+            increment_value = increment_value + increment;
+            return_vec.push(increment_value);
+        }
     }
 
     let placeholder_return = vec![1.0];
@@ -28,8 +50,8 @@ fn exponential_progression(a: f64, b: f64, c: usize) -> Vec<f64> {
 }
 
 fn main() {
-    // let options = Options::parse();
-    // println!("{:?}", options);
+    let opt = Options::from_args();
+    println!("{:#?}", opt);
 
-    exponential_progression(1.0, 2.0, 3);
+    find_fenceposts(16.0, 15.0, 4);
 }
