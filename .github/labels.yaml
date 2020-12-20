@@ -1,0 +1,13 @@
+---
+
+@code:
+  - src/*
+  - src/*/**
+
+@docs:
+  - docs/*
+  - docs/*/**
+
+@ci:
+  - .github/*
+  - .github/*/**
