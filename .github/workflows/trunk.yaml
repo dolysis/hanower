@@ -1,0 +1,55 @@
+name: Mainline Integration
+
+on:
+  push:
+    branches:
+      - trying
+      - staging
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  trunk-ci:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-18.04
+          - macos-10.15
+          - windows-2019
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --tests
+
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+      - name: Clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
+
+      - name: Format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
