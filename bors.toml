@@ -1,0 +1,4 @@
+status                  = ["quick-ci"]
+pr_status               = ["trunk-ci"]
+use_squash_merge        = true
+delete_merged_branches  = true
