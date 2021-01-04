@@ -1,6 +1,6 @@
 // use csv;
 // use std::collections::BinaryHeap;
-use std::{fmt};
+use std::fmt;
 
 use structopt::StructOpt;
 
@@ -35,9 +35,9 @@ impl Interval {
     /// number of intervals
     pub fn new(low: f64, high: f64, count: u64) -> Result<Self, IntervalError> {
         if low >= high {
-            return Err(IntervalError::InvalidRange);
+            Err(IntervalError::InvalidRange)
         } else if count < 2 {
-            return Err(IntervalError::LowCount(count));
+            Err(IntervalError::LowCount(count))
         } else {
             Ok(Self { low, high, count })
         }
