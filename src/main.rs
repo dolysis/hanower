@@ -1,6 +1,6 @@
 // use csv;
 // use std::collections::BinaryHeap;
-use std::{fmt, io};
+use std::{fmt};
 
 use structopt::StructOpt;
 
