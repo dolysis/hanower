@@ -271,6 +271,7 @@ mod tests {
      * return $OUTPUT
      */
 
+    // TODO: Remove this struct, replacing it with Interval::new at all call sites
     /// Small struct for carrying around fence function arguments
     #[derive(Debug, Clone, Copy)]
     struct FenceArgs {
@@ -285,6 +286,8 @@ mod tests {
         }
     }
 
+    // TODO: Remove this function, replacing it with Interval::intervals().collect()
+    // as all call sites
     /// Wrapper function for passing around our actual function
     fn fence_fn(args: FenceArgs) -> Result<Vec<f64>, AnyError> {
         let your_fn = |start, end, count| {
@@ -327,7 +330,7 @@ mod tests {
     #[test]
     /// Runs the fence function against a series of precomputed data sets checking that
     /// all of the actual outputs match the expected values
-    fn hanoi_algorithm_static_data() -> TestResult {
+    fn hanoi_algorithm_iter() -> TestResult {
         let test_values = test_data().into_iter();
 
         // For each set of args and precomputed outputs
@@ -354,6 +357,36 @@ mod tests {
             })?;
 
             // Assert the lists are the same length, if they aren't the actual data is wrong
+            assert_output_length(actual_list.len(), expected_list.len())?
+        }
+
+        Ok(())
+    }
+
+    // TODO: Create a test for the DoubleEndedIterator implementation of Interval
+    #[allow(unused_variables)]
+    #[test]
+    fn hanoi_algorithm_iter_back() -> TestResult {
+        for (interval, expected_list) in test_data().into_iter() {
+            let actual_list: IntervalIter = todo!("replace me"); // interval.intervals()
+
+            actual_list.rev().zip(expected_list.iter().rev()).enumerate().try_for_each(|(idx, (actual, &expected))| {
+                // Round the actual item
+                let rounded = actual.round() as i64;
+
+                // Check that the rounded item matches the precomputed item
+                if rounded != expected {
+                    let msg = format!(
+                        "@{} => Expected {}, received {} ({})\nExpected Values | {:?}\nActual Values  | {:?}",
+                        idx, expected, rounded, actual, expected_list, actual_list
+                    );
+
+                    error!(msg);
+                }
+
+                Ok(())
+            })?;
+
             assert_output_length(actual_list.len(), expected_list.len())?
         }
 
