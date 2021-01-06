@@ -43,34 +43,132 @@ impl Interval {
         }
     }
 
-    /// Calculate a set of intervals based on the low and high points of
-    /// this Interval
-    pub fn intervals(&self) -> Vec<f64> {
+    /// Return an iterator of lazily evaluated intervals, starting from this
+    /// Interval's low value up to and including the high value
+    pub fn iter(&self) -> IntervalIter {
+        self.new_iter()
+    }
+
+    /// Returns an iterator of lazily evaluated intervals based on the
+    /// low and high points of this Interval
+    pub fn intervals(&self) -> IntervalIter {
+        let mut iter = self.new_iter();
+
+        // Skip the floor value
+        iter.next();
+
+        iter
+    }
+
+    fn new_iter(&self) -> IntervalIter {
         debug_assert!(self.low < self.high, "Low must be less than high");
         debug_assert!(self.count >= 2, "Interval count must be >= 2.");
 
-        if self.count == 2 {
-            vec![self.low, self.high]
-        } else {
-            let mut intervals = Vec::new();
+        IntervalIter::new(self.low, self.high, self.count)
+    }
+}
 
-            // scale high value down according to low value
-            // low must always move down to 1.0
-            // let scaled_end = end - start + 1.0;
-            let nlog = (self.high - self.low + 1.0).ln() / self.count as f64;
+#[derive(Debug, Clone)]
+pub struct IntervalIter {
+    high: f64,
+    low: f64,
+    count: u64,
 
-            // iterate over desired length of return vector (== count)
-            // fill in the incremental fencepost values
-            for idx in 1..=self.count {
-                let expo = (nlog * idx as f64).exp();
-                let post = expo + self.low - 1.0;
-                intervals.push(post);
+    // Used by next()
+    idx_front: u64,
+    // Used by next_back()
+    idx_back: u64,
+}
+
+impl IntervalIter {
+    fn new(low: f64, high: f64, count: u64) -> Self {
+        Self {
+            low,
+            high,
+            count,
+            idx_front: 0,
+            idx_back: 0,
+        }
+    }
+
+    fn idx(&self) -> u64 {
+        self.idx_front + self.idx_back
+    }
+
+    fn calculate_interval(&self, index: u64) -> f64 {
+        // scale high value down according to low value
+        // low must always move down to 1.0
+        // let scaled_end = end - start + 1.0;
+        let nlog = (self.high - self.low + 1.0).ln() / self.count as f64;
+        let expo = (nlog * index as f64).exp();
+
+        expo + self.low - 1.0
+    }
+}
+
+impl Iterator for IntervalIter {
+    type Item = f64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx() > self.count {
+            return None;
+        }
+
+        match self.idx_front {
+            0 => {
+                self.idx_front += 1;
+
+                Some(self.low)
             }
+            index => {
+                let interval = self.calculate_interval(index);
+                self.idx_front += 1;
 
-            intervals
+                Some(interval)
+            }
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        // Because we iterate over low *and* `count` number
+        // of intervals we need to add one
+        let len = (self.count + 1) - self.idx();
+        let len = len as usize;
+
+        (len, Some(len))
+    }
+}
+
+impl DoubleEndedIterator for IntervalIter {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        if self.idx() > self.count {
+            return None;
+        }
+
+        match self.count.checked_sub(self.idx_back) {
+            Some(0) => {
+                self.idx_back += 1;
+
+                Some(self.low)
+            }
+            Some(index) => {
+                let interval = self.calculate_interval(index);
+                self.idx_back += 1;
+
+                Some(interval)
+            }
+            None => {
+                self.idx_back += 1;
+
+                None
+            }
         }
     }
 }
+
+impl ExactSizeIterator for IntervalIter {}
+
+impl std::iter::FusedIterator for IntervalIter {}
 
 #[derive(Debug)]
 pub enum IntervalError {
@@ -191,7 +289,7 @@ mod tests {
     fn fence_fn(args: FenceArgs) -> Result<Vec<f64>, AnyError> {
         let your_fn = |start, end, count| {
             Interval::new(start, end, count)
-                .map(|i| i.intervals())
+                .map(|i| i.intervals().collect())
                 .map_err(Into::into)
         };
 
