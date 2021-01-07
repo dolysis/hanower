@@ -70,8 +70,8 @@ impl Interval {
 
 #[derive(Debug, Clone)]
 pub struct IntervalIter {
-    high: f64,
     low: f64,
+    high: f64,
     count: u64,
 
     // Used by next()
@@ -98,7 +98,6 @@ impl IntervalIter {
     fn calculate_interval(&self, index: u64) -> f64 {
         // scale high value down according to low value
         // low must always move down to 1.0
-        // let scaled_end = end - start + 1.0;
         let nlog = (self.high - self.low + 1.0).ln() / self.count as f64;
         let expo = (nlog * index as f64).exp();
 
@@ -186,30 +185,12 @@ impl fmt::Display for IntervalError {
                 "Invalid count. Ensure `number` value is >= 2 (was: {})",
                 bad
             ),
-            Self::InvalidRange => write!(f, "Invalid range. Ensure start is less than end"),
+            Self::InvalidRange => write!(f, "Invalid range. Ensure `start` value is less than `end`"),
         }
     }
 }
 
 impl std::error::Error for IntervalError {}
-
-// uses find_fenceposts() vec to identify buckets
-// and then pulls the index number & row data from the max index
-// in those buckets
-// fn bucket_maxes(fence_vec: Vec<f64>, file: String) -> Vec<f64> {
-//     match read_csv(file) {
-//         Err(e) => eprintln!("{}", e),
-//         Ok(index_vec) => {
-//             let _min = fence_vec[0];
-//             let _max = fence_vec[(Opts::from_args().number as usize) - 1];
-//             let _bucket_vec: Vec<f64> = vec![];
-
-//             return index_vec; //placeholder return
-//         }
-//     }
-
-//     return vec![0.0, 99.0]; //placeholder return
-// }
 
 // fn read_csv(path: String) -> Result<Vec<f64>, Box<dyn Error>> {
 //     let mut reader = csv::Reader::from_path(path)?;
@@ -271,25 +252,10 @@ mod tests {
      * return $OUTPUT
      */
 
-    // TODO: Remove this struct, replacing it with Interval::new at all call sites
-    /// Small struct for carrying around fence function arguments
-    #[derive(Debug, Clone, Copy)]
-    struct FenceArgs {
-        pub start: f64,
-        pub end: f64,
-        pub count: u64,
-    }
-
-    impl FenceArgs {
-        fn new(start: f64, end: f64, count: u64) -> Self {
-            Self { start, end, count }
-        }
-    }
-
     // TODO: Remove this function, replacing it with Interval::intervals().collect()
     // as all call sites
     /// Wrapper function for passing around our actual function
-    fn fence_fn(args: FenceArgs) -> Result<Vec<f64>, AnyError> {
+    fn fence_fn(args: Interval) -> Result<Vec<f64>, AnyError> {
         let your_fn = |start, end, count| {
             Interval::new(start, end, count)
                 .map(|i| i.intervals().collect())
@@ -302,12 +268,12 @@ mod tests {
     /* --- TESTS --- */
 
     #[test]
-    /// Checks that the fence function correctly detects and refuses invalid input values.
+    /// Checks that the Interval struct correctly detects and refuses invalid input values.
     fn start_after_end_err() -> TestResult {
-        let args = FenceArgs::new(10.0, 1.0, 5);
+        let args = Interval::new(10.0, 1.0, 5);
 
         let test: Result<Vec<f64>, AnyError> = fence_fn(args);
-
+        
         // Assert that bad inputs lead to an error
         assert!(test.is_err());
 
@@ -317,7 +283,7 @@ mod tests {
     #[test]
     /// Checks that the fence function correctly detects and refuses invalid count values
     fn count_less_than_two_err() -> TestResult {
-        let args = FenceArgs::new(1.0, 10.0, 1);
+        let args = Interval::new(1.0, 10.0, 1);
 
         let test: Result<Vec<f64>, AnyError> = fence_fn(args);
 
@@ -405,22 +371,22 @@ mod tests {
         Ok(())
     }
 
-    fn test_data() -> Vec<(FenceArgs, Vec<i64>)> {
+    fn test_data() -> Vec<(Interval, Vec<i64>)> {
         vec![
-            (FenceArgs::new(1.0, 16.0, 4), vec![2, 4, 8, 16]),
+            (Interval::new(1.0, 16.0, 4), vec![2, 4, 8, 16]),
             (
-                FenceArgs::new(100.0, 1000.0, 15),
+                Interval::new(100.0, 1000.0, 15),
                 vec![
                     101, 101, 103, 105, 109, 114, 123, 137, 158, 192, 246, 330, 463, 671, 1000,
                 ],
             ),
             (
-                FenceArgs::new(3.0, 72.0, 9),
+                Interval::new(3.0, 72.0, 9),
                 vec![4, 5, 6, 9, 13, 19, 29, 46, 72],
             ),
-            (FenceArgs::new(-19.0, 12.0, 3), vec![-17, -10, 12]),
+            (Interval::new(-19.0, 12.0, 3), vec![-17, -10, 12]),
             (
-                FenceArgs::new(-11000.0, -1200.0, 16),
+                Interval::new(-11000.0, -1200.0, 16),
                 vec![
                     -10999, -10998, -10995, -10991, -10983, -10970, -10945, -10902, -10825, -10689,
                     -10446, -10016, -9252, -7894, -5483, -1200,
