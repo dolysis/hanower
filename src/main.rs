@@ -252,57 +252,43 @@ mod tests {
      * return $OUTPUT
      */
 
-    // TODO: Remove this function, replacing it with Interval::intervals().collect()
-    // as all call sites
-    /// Wrapper function for passing around our actual function
-    fn fence_fn(args: Interval) -> Result<Vec<f64>, AnyError> {
-        let your_fn = |start, end, count| {
-            Interval::new(start, end, count)
-                .map(|i| i.intervals().collect())
-                .map_err(Into::into)
-        };
-
-        your_fn(args.start, args.end, args.count)
-    }
-
     /* --- TESTS --- */
 
     #[test]
     /// Checks that the Interval struct correctly detects and refuses invalid input values.
     fn start_after_end_err() -> TestResult {
         let args = Interval::new(10.0, 1.0, 5);
-
-        let test: Result<Vec<f64>, AnyError> = fence_fn(args);
         
         // Assert that bad inputs lead to an error
-        assert!(test.is_err());
+        assert!(args.is_err());
 
         Ok(())
     }
 
     #[test]
-    /// Checks that the fence function correctly detects and refuses invalid count values
+    /// Checks that the Interval struct correctly detects and refuses invalid count values
     fn count_less_than_two_err() -> TestResult {
         let args = Interval::new(1.0, 10.0, 1);
 
-        let test: Result<Vec<f64>, AnyError> = fence_fn(args);
-
         // Assert that a bad count leads to an error
-        assert!(test.is_err());
+        assert!(args.is_err());
 
         Ok(())
     }
 
     #[test]
-    /// Runs the fence function against a series of precomputed data sets checking that
+    /// Runs args.intervals().collect() against a series of precomputed data sets checking that
     /// all of the actual outputs match the expected values
+    /// TODO: improve phrasing of above comment
     fn hanoi_algorithm_iter() -> TestResult {
         let test_values = test_data().into_iter();
 
         // For each set of args and precomputed outputs
         for (args, expected_list) in test_values {
             // Generate the actual outputs
-            let actual_list = fence_fn(args)?;
+            // let actual_list = fence_fn(args)?;
+
+            let actual_list: Vec<f64> = args.intervals().collect();
 
             // For each expected and actual data sets
             actual_list.iter().zip(expected_list.iter()).enumerate().try_for_each(|(idx, (&actual, &expected))| {
@@ -329,35 +315,35 @@ mod tests {
         Ok(())
     }
 
-    // TODO: Create a test for the DoubleEndedIterator implementation of Interval
-    #[allow(unused_variables)]
-    #[test]
-    fn hanoi_algorithm_iter_back() -> TestResult {
-        for (interval, expected_list) in test_data().into_iter() {
-            let actual_list: IntervalIter = todo!("replace me"); // interval.intervals()
+    // // TODO: Create a test for the DoubleEndedIterator implementation of Interval
+    // #[allow(unused_variables)]
+    // #[test]
+    // fn hanoi_algorithm_iter_back() -> TestResult {
+    //     for (interval, expected_list) in test_data().into_iter() {
+    //         let actual_list: IntervalIter = todo!("replace me"); // interval.intervals()
 
-            actual_list.rev().zip(expected_list.iter().rev()).enumerate().try_for_each(|(idx, (actual, &expected))| {
-                // Round the actual item
-                let rounded = actual.round() as i64;
+    //         actual_list.rev().zip(expected_list.iter().rev()).enumerate().try_for_each(|(idx, (actual, &expected))| {
+    //             // Round the actual item
+    //             let rounded = actual.round() as i64;
 
-                // Check that the rounded item matches the precomputed item
-                if rounded != expected {
-                    let msg = format!(
-                        "@{} => Expected {}, received {} ({})\nExpected Values | {:?}\nActual Values  | {:?}",
-                        idx, expected, rounded, actual, expected_list, actual_list
-                    );
+    //             // Check that the rounded item matches the precomputed item
+    //             if rounded != expected {
+    //                 let msg = format!(
+    //                     "@{} => Expected {}, received {} ({})\nExpected Values | {:?}\nActual Values  | {:?}",
+    //                     idx, expected, rounded, actual, expected_list, actual_list
+    //                 );
 
-                    error!(msg);
-                }
+    //                 error!(msg);
+    //             }
 
-                Ok(())
-            })?;
+    //             Ok(())
+    //         })?;
 
-            assert_output_length(actual_list.len(), expected_list.len())?
-        }
+    //         assert_output_length(actual_list.len(), expected_list.len())?
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     /* --- HELPER FUNCTIONS -- */
 
@@ -372,8 +358,10 @@ mod tests {
     }
 
     fn test_data() -> Vec<(Interval, Vec<i64>)> {
+        // let mut vec = Interval::new(1.0, 16.0, 4);
+        
         vec![
-            (Interval::new(1.0, 16.0, 4), vec![2, 4, 8, 16]),
+            (vec, vec![2, 4, 8, 16]),
             (
                 Interval::new(100.0, 1000.0, 15),
                 vec![
