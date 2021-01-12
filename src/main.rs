@@ -1,5 +1,4 @@
 // use csv;
-// use std::collections::BinaryHeap;
 use std::fmt;
 
 use structopt::StructOpt;
@@ -185,7 +184,9 @@ impl fmt::Display for IntervalError {
                 "Invalid count. Ensure `number` value is >= 2 (was: {})",
                 bad
             ),
-            Self::InvalidRange => write!(f, "Invalid range. Ensure `start` value is less than `end`"),
+            Self::InvalidRange => {
+                write!(f, "Invalid range. Ensure `start` value is less than `end`")
+            }
         }
     }
 }
@@ -258,7 +259,7 @@ mod tests {
     /// Checks that the Interval struct correctly detects and refuses invalid input values.
     fn start_after_end_err() -> TestResult {
         let args = Interval::new(10.0, 1.0, 5);
-        
+
         // Assert that bad inputs lead to an error
         assert!(args.is_err());
 
