@@ -277,17 +277,12 @@ mod tests {
     }
 
     #[test]
-    /// Runs args.intervals().collect() against a series of precomputed data sets checking that
-    /// all of the actual outputs match the expected values
-    /// TODO: improve phrasing of above comment
+    /// Runs the program's computed intervals against a series of precomputed data sets,
+    /// checking that all of the actual outputs match the expected values
     fn hanoi_algorithm_iter() -> TestResult {
-        let test_values = test_data().into_iter();
-
         // For each set of args and precomputed outputs
-        for (args, expected_list) in test_values {
+        for (args, expected_list) in test_data().into_iter() {
             // Generate the actual outputs
-            // let actual_list = fence_fn(args)?;
-
             let actual_list: Vec<f64> = args.intervals().collect();
 
             // For each expected and actual data sets
@@ -315,35 +310,34 @@ mod tests {
         Ok(())
     }
 
-    // // TODO: Create a test for the DoubleEndedIterator implementation of Interval
-    // #[allow(unused_variables)]
-    // #[test]
-    // fn hanoi_algorithm_iter_back() -> TestResult {
-    //     for (interval, expected_list) in test_data().into_iter() {
-    //         let actual_list: IntervalIter = todo!("replace me"); // interval.intervals()
+    #[allow(unused_variables)]
+    #[test]
+    fn hanoi_algorithm_iter_back() -> TestResult {
+        for (interval, expected_list) in test_data().into_iter() {
+            let actual_list: IntervalIter = interval.intervals();
 
-    //         actual_list.rev().zip(expected_list.iter().rev()).enumerate().try_for_each(|(idx, (actual, &expected))| {
-    //             // Round the actual item
-    //             let rounded = actual.round() as i64;
+            interval.intervals().rev().zip(expected_list.iter().rev()).enumerate().try_for_each(|(idx, (actual, &expected))| {
+                // Round the actual item
+                let rounded = actual.round() as i64;
 
-    //             // Check that the rounded item matches the precomputed item
-    //             if rounded != expected {
-    //                 let msg = format!(
-    //                     "@{} => Expected {}, received {} ({})\nExpected Values | {:?}\nActual Values  | {:?}",
-    //                     idx, expected, rounded, actual, expected_list, actual_list
-    //                 );
+                // Check that the rounded item matches the precomputed item
+                if rounded != expected {
+                    let msg = format!(
+                        "@{} => Expected {}, received {} ({})\nExpected Values | {:?}\nActual Values  | {:?}",
+                        idx, expected, rounded, actual, expected_list, actual_list
+                    );
 
-    //                 error!(msg);
-    //             }
+                    error!(msg);
+                }
 
-    //             Ok(())
-    //         })?;
+                Ok(())
+            })?;
 
-    //         assert_output_length(actual_list.len(), expected_list.len())?
-    //     }
+            assert_output_length(actual_list.len(), expected_list.len())?
+        }
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     /* --- HELPER FUNCTIONS -- */
 
@@ -357,24 +351,24 @@ mod tests {
         Ok(())
     }
 
+    // helper function for `hanoi_algorithm_iter` test
+    // unwrap helps validate that the input data (Interval::new) is correct for test
     fn test_data() -> Vec<(Interval, Vec<i64>)> {
-        // let mut vec = Interval::new(1.0, 16.0, 4);
-        
         vec![
-            (vec, vec![2, 4, 8, 16]),
+            (Interval::new(1.0, 16.0, 4).unwrap(), vec![2, 4, 8, 16]),
             (
-                Interval::new(100.0, 1000.0, 15),
+                Interval::new(100.0, 1000.0, 15).unwrap(),
                 vec![
                     101, 101, 103, 105, 109, 114, 123, 137, 158, 192, 246, 330, 463, 671, 1000,
                 ],
             ),
             (
-                Interval::new(3.0, 72.0, 9),
+                Interval::new(3.0, 72.0, 9).unwrap(),
                 vec![4, 5, 6, 9, 13, 19, 29, 46, 72],
             ),
-            (Interval::new(-19.0, 12.0, 3), vec![-17, -10, 12]),
+            (Interval::new(-19.0, 12.0, 3).unwrap(), vec![-17, -10, 12]),
             (
-                Interval::new(-11000.0, -1200.0, 16),
+                Interval::new(-11000.0, -1200.0, 16).unwrap(),
                 vec![
                     -10999, -10998, -10995, -10991, -10983, -10970, -10945, -10902, -10825, -10689,
                     -10446, -10016, -9252, -7894, -5483, -1200,
