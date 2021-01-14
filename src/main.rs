@@ -1,5 +1,4 @@
 // use csv;
-// use std::collections::BinaryHeap;
 use std::fmt;
 
 use structopt::StructOpt;
@@ -43,34 +42,131 @@ impl Interval {
         }
     }
 
-    /// Calculate a set of intervals based on the low and high points of
-    /// this Interval
-    pub fn intervals(&self) -> Vec<f64> {
+    /// Return an iterator of lazily evaluated intervals, starting from this
+    /// Interval's low value up to and including the high value
+    pub fn iter(&self) -> IntervalIter {
+        self.new_iter()
+    }
+
+    /// Returns an iterator of lazily evaluated intervals based on the
+    /// low and high points of this Interval
+    pub fn intervals(&self) -> IntervalIter {
+        let mut iter = self.new_iter();
+
+        // Skip the floor value
+        iter.next();
+
+        iter
+    }
+
+    fn new_iter(&self) -> IntervalIter {
         debug_assert!(self.low < self.high, "Low must be less than high");
         debug_assert!(self.count >= 2, "Interval count must be >= 2.");
 
-        if self.count == 2 {
-            vec![self.low, self.high]
-        } else {
-            let mut intervals = Vec::new();
+        IntervalIter::new(self.low, self.high, self.count)
+    }
+}
 
-            // scale high value down according to low value
-            // low must always move down to 1.0
-            // let scaled_end = end - start + 1.0;
-            let nlog = (self.high - self.low + 1.0).ln() / self.count as f64;
+#[derive(Debug, Clone)]
+pub struct IntervalIter {
+    low: f64,
+    high: f64,
+    count: u64,
 
-            // iterate over desired length of return vector (== count)
-            // fill in the incremental fencepost values
-            for idx in 1..=self.count {
-                let expo = (nlog * idx as f64).exp();
-                let post = expo + self.low - 1.0;
-                intervals.push(post);
+    // Used by next()
+    idx_front: u64,
+    // Used by next_back()
+    idx_back: u64,
+}
+
+impl IntervalIter {
+    fn new(low: f64, high: f64, count: u64) -> Self {
+        Self {
+            low,
+            high,
+            count,
+            idx_front: 0,
+            idx_back: 0,
+        }
+    }
+
+    fn idx(&self) -> u64 {
+        self.idx_front + self.idx_back
+    }
+
+    fn calculate_interval(&self, index: u64) -> f64 {
+        // scale high value down according to low value
+        // low must always move down to 1.0
+        let nlog = (self.high - self.low + 1.0).ln() / self.count as f64;
+        let expo = (nlog * index as f64).exp();
+
+        expo + self.low - 1.0
+    }
+}
+
+impl Iterator for IntervalIter {
+    type Item = f64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx() > self.count {
+            return None;
+        }
+
+        match self.idx_front {
+            0 => {
+                self.idx_front += 1;
+
+                Some(self.low)
             }
+            index => {
+                let interval = self.calculate_interval(index);
+                self.idx_front += 1;
 
-            intervals
+                Some(interval)
+            }
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        // Because we iterate over low *and* `count` number
+        // of intervals we need to add one
+        let len = (self.count + 1) - self.idx();
+        let len = len as usize;
+
+        (len, Some(len))
+    }
+}
+
+impl DoubleEndedIterator for IntervalIter {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        if self.idx() > self.count {
+            return None;
+        }
+
+        match self.count.checked_sub(self.idx_back) {
+            Some(0) => {
+                self.idx_back += 1;
+
+                Some(self.low)
+            }
+            Some(index) => {
+                let interval = self.calculate_interval(index);
+                self.idx_back += 1;
+
+                Some(interval)
+            }
+            None => {
+                self.idx_back += 1;
+
+                None
+            }
         }
     }
 }
+
+impl ExactSizeIterator for IntervalIter {}
+
+impl std::iter::FusedIterator for IntervalIter {}
 
 #[derive(Debug)]
 pub enum IntervalError {
@@ -88,30 +184,14 @@ impl fmt::Display for IntervalError {
                 "Invalid count. Ensure `number` value is >= 2 (was: {})",
                 bad
             ),
-            Self::InvalidRange => write!(f, "Invalid range. Ensure start is less than end"),
+            Self::InvalidRange => {
+                write!(f, "Invalid range. Ensure `start` value is less than `end`")
+            }
         }
     }
 }
 
 impl std::error::Error for IntervalError {}
-
-// uses find_fenceposts() vec to identify buckets
-// and then pulls the index number & row data from the max index
-// in those buckets
-// fn bucket_maxes(fence_vec: Vec<f64>, file: String) -> Vec<f64> {
-//     match read_csv(file) {
-//         Err(e) => eprintln!("{}", e),
-//         Ok(index_vec) => {
-//             let _min = fence_vec[0];
-//             let _max = fence_vec[(Opts::from_args().number as usize) - 1];
-//             let _bucket_vec: Vec<f64> = vec![];
-
-//             return index_vec; //placeholder return
-//         }
-//     }
-
-//     return vec![0.0, 99.0]; //placeholder return
-// }
 
 // fn read_csv(path: String) -> Result<Vec<f64>, Box<dyn Error>> {
 //     let mut reader = csv::Reader::from_path(path)?;
@@ -173,69 +253,38 @@ mod tests {
      * return $OUTPUT
      */
 
-    /// Small struct for carrying around fence function arguments
-    #[derive(Debug, Clone, Copy)]
-    struct FenceArgs {
-        pub start: f64,
-        pub end: f64,
-        pub count: u64,
-    }
-
-    impl FenceArgs {
-        fn new(start: f64, end: f64, count: u64) -> Self {
-            Self { start, end, count }
-        }
-    }
-
-    /// Wrapper function for passing around our actual function
-    fn fence_fn(args: FenceArgs) -> Result<Vec<f64>, AnyError> {
-        let your_fn = |start, end, count| {
-            Interval::new(start, end, count)
-                .map(|i| i.intervals())
-                .map_err(Into::into)
-        };
-
-        your_fn(args.start, args.end, args.count)
-    }
-
     /* --- TESTS --- */
 
     #[test]
-    /// Checks that the fence function correctly detects and refuses invalid input values.
+    /// Checks that the Interval struct correctly detects and refuses invalid input values.
     fn start_after_end_err() -> TestResult {
-        let args = FenceArgs::new(10.0, 1.0, 5);
-
-        let test: Result<Vec<f64>, AnyError> = fence_fn(args);
+        let args = Interval::new(10.0, 1.0, 5);
 
         // Assert that bad inputs lead to an error
-        assert!(test.is_err());
+        assert!(args.is_err());
 
         Ok(())
     }
 
     #[test]
-    /// Checks that the fence function correctly detects and refuses invalid count values
+    /// Checks that the Interval struct correctly detects and refuses invalid count values
     fn count_less_than_two_err() -> TestResult {
-        let args = FenceArgs::new(1.0, 10.0, 1);
-
-        let test: Result<Vec<f64>, AnyError> = fence_fn(args);
+        let args = Interval::new(1.0, 10.0, 1);
 
         // Assert that a bad count leads to an error
-        assert!(test.is_err());
+        assert!(args.is_err());
 
         Ok(())
     }
 
     #[test]
-    /// Runs the fence function against a series of precomputed data sets checking that
-    /// all of the actual outputs match the expected values
-    fn hanoi_algorithm_static_data() -> TestResult {
-        let test_values = test_data().into_iter();
-
+    /// Runs the program's computed intervals against a series of precomputed data sets,
+    /// checking that all of the actual outputs match the expected values
+    fn hanoi_algorithm_iter() -> TestResult {
         // For each set of args and precomputed outputs
-        for (args, expected_list) in test_values {
+        for (args, expected_list) in test_data().into_iter() {
             // Generate the actual outputs
-            let actual_list = fence_fn(args)?;
+            let actual_list: Vec<f64> = args.intervals().collect();
 
             // For each expected and actual data sets
             actual_list.iter().zip(expected_list.iter()).enumerate().try_for_each(|(idx, (&actual, &expected))| {
@@ -262,6 +311,35 @@ mod tests {
         Ok(())
     }
 
+    #[allow(unused_variables)]
+    #[test]
+    fn hanoi_algorithm_iter_back() -> TestResult {
+        for (interval, expected_list) in test_data().into_iter() {
+            let actual_list: IntervalIter = interval.intervals();
+
+            interval.intervals().rev().zip(expected_list.iter().rev()).enumerate().try_for_each(|(idx, (actual, &expected))| {
+                // Round the actual item
+                let rounded = actual.round() as i64;
+
+                // Check that the rounded item matches the precomputed item
+                if rounded != expected {
+                    let msg = format!(
+                        "@{} => Expected {}, received {} ({})\nExpected Values | {:?}\nActual Values  | {:?}",
+                        idx, expected, rounded, actual, expected_list, actual_list
+                    );
+
+                    error!(msg);
+                }
+
+                Ok(())
+            })?;
+
+            assert_output_length(actual_list.len(), expected_list.len())?
+        }
+
+        Ok(())
+    }
+
     /* --- HELPER FUNCTIONS -- */
 
     fn assert_output_length(actual: usize, expected: usize) -> TestResult {
@@ -274,22 +352,24 @@ mod tests {
         Ok(())
     }
 
-    fn test_data() -> Vec<(FenceArgs, Vec<i64>)> {
+    // helper function for `hanoi_algorithm_iter` test
+    // unwrap helps validate that the input data (Interval::new) is correct for test
+    fn test_data() -> Vec<(Interval, Vec<i64>)> {
         vec![
-            (FenceArgs::new(1.0, 16.0, 4), vec![2, 4, 8, 16]),
+            (Interval::new(1.0, 16.0, 4).unwrap(), vec![2, 4, 8, 16]),
             (
-                FenceArgs::new(100.0, 1000.0, 15),
+                Interval::new(100.0, 1000.0, 15).unwrap(),
                 vec![
                     101, 101, 103, 105, 109, 114, 123, 137, 158, 192, 246, 330, 463, 671, 1000,
                 ],
             ),
             (
-                FenceArgs::new(3.0, 72.0, 9),
+                Interval::new(3.0, 72.0, 9).unwrap(),
                 vec![4, 5, 6, 9, 13, 19, 29, 46, 72],
             ),
-            (FenceArgs::new(-19.0, 12.0, 3), vec![-17, -10, 12]),
+            (Interval::new(-19.0, 12.0, 3).unwrap(), vec![-17, -10, 12]),
             (
-                FenceArgs::new(-11000.0, -1200.0, 16),
+                Interval::new(-11000.0, -1200.0, 16).unwrap(),
                 vec![
                     -10999, -10998, -10995, -10991, -10983, -10970, -10945, -10902, -10825, -10689,
                     -10446, -10016, -9252, -7894, -5483, -1200,
