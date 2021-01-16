@@ -14,6 +14,8 @@ jobs:
       cli: ${{ steps.filter.outputs.cli }}
       core: ${{ steps.filter.outputs.core }}
     steps:
+      - uses: actions/checkout@v2
+
       - uses: dorny/paths-filter@v2
         id: filter
         with:
@@ -28,6 +30,8 @@ jobs:
     env:
       CORE_ONLY: "${{ needs.diff.outputs.core == 'true' && needs.diff.outputs.cli == 'false' }}"
     steps:
+      - run: env
+
       - uses: actions/checkout@v2
 
       - name: Setup Rust toolchain
