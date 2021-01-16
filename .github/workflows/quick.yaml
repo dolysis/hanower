@@ -7,8 +7,26 @@ on:
       - develop
 
 jobs:
+  # Check code paths touched by incoming changes
+  diff:
+    runs-on: ubuntu-latest
+    outputs:
+      cli: ${{ steps.filter.outputs.cli }}
+      core: ${{ steps.filter.outputs.core }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            cli:
+              - 'cli/**'
+            core:
+              - 'core/**'
+
   quick-ci:
     runs-on: ubuntu-18.04
+    env:
+      CORE_ONLY: "${{ needs.diff.outputs.core == 'true' && needs.diff.outputs.cli == 'false' }}"
     steps:
       - uses: actions/checkout@v2
 
@@ -24,12 +42,13 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --tests
+          args: ${{ env.CORE_ONLY && '--lib' }}
 
       - name: Code test
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: ${{ env.CORE_ONLY && '--lib' }}
 
       - name: Code format
         uses: actions-rs/cargo@v1
