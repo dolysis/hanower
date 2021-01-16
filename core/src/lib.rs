@@ -1,26 +1,4 @@
-// use csv;
 use std::fmt;
-
-use structopt::StructOpt;
-
-#[derive(StructOpt, Debug)]
-#[structopt(name = "hanoi")]
-struct Opts {
-    #[structopt(short, long)]
-    debug: bool,
-
-    #[structopt(default_value = "10.0")]
-    start: f64,
-
-    #[structopt(default_value = "100.0")]
-    end: f64,
-
-    #[structopt(default_value = "2")]
-    number: u64,
-
-    #[structopt(short, long)]
-    file: String,
-}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Interval {
@@ -206,14 +184,6 @@ impl std::error::Error for IntervalError {}
 //     Ok(index_vec)
 // }
 
-fn main() {
-    let _opt = Opts::from_args();
-    // println!("{:#?}", opt);
-
-    // let fence_vec = find_fenceposts(opt.start, opt.end, opt.number);
-    // bucket_maxes(fence_vec, opt.file);
-}
-
 #[cfg(test)]
 mod tests {
     #![allow(unused_imports)]
@@ -311,7 +281,6 @@ mod tests {
         Ok(())
     }
 
-    #[allow(unused_variables)]
     #[test]
     fn hanoi_algorithm_iter_back() -> TestResult {
         for (interval, expected_list) in test_data().into_iter() {
