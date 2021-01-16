@@ -26,6 +26,7 @@ jobs:
               - 'core/**'
 
   quick-ci:
+    needs: diff
     runs-on: ubuntu-18.04
     env:
       CORE_ONLY: "${{ needs.diff.outputs.core == 'true' && needs.diff.outputs.cli == 'false' }}"
@@ -46,13 +47,13 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: ${{ env.CORE_ONLY && '--lib' }}
+          args: ${{ env.CORE_ONLY == 'true' && '--lib' }}
 
       - name: Code test
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: ${{ env.CORE_ONLY && '--lib' }}
+          args: ${{ env.CORE_ONLY == 'true' && '--lib' }}
 
       - name: Code format
         uses: actions-rs/cargo@v1
