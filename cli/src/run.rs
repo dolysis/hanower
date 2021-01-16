@@ -9,4 +9,3 @@ pub trait Runner {
         config: Option<Self::Config>,
     ) -> Result<(), color_eyre::eyre::Report>;
 }
-
