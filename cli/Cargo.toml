@@ -1,5 +1,5 @@
 [package]
-name = "hanoi"
+name = "hanoi-cli"
 version = "0.1.0"
 authors = ["Bazaah <github@luxolus.com>"]
 edition = "2018"
@@ -11,3 +11,7 @@ structopt = "0.3"
 color-eyre = { version = "0.5", default-features = false }
 
 core = { version = "0.2", path = "../core", package = "hanoi" }
+
+[[bin]]
+path = "src/main.rs"
+name = "hanoi"
