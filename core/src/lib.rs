@@ -20,6 +20,18 @@ impl Interval {
         }
     }
 
+    pub fn low(&self) -> f64 {
+        self.low
+    }
+
+    pub fn high(&self) -> f64 {
+        self.high
+    }
+
+    pub fn count(&self) -> u64 {
+        self.count
+    }
+
     /// Return an iterator of lazily evaluated intervals, starting from this
     /// Interval's low value up to and including the high value
     pub fn iter(&self) -> IntervalIter {
