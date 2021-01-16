@@ -1,7 +1,6 @@
 mod cli;
 mod config;
 mod run;
-mod runner;
 
 use cli::Root;
 use color_eyre::eyre::Result;
