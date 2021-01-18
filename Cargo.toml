@@ -1,12 +1,6 @@
-[package]
-name = "hanoi"
-version = "0.2.0"
-authors = ["emucc <github@elrimer.com>"]
-edition = "2018"
+[workspace]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-structopt = "0.3"
-csv = "1.1"
-anyhow = "1.0"
+members = [
+    "core",
+    "cli",
+]

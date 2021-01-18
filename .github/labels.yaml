@@ -1,8 +1,16 @@
 ---
 
+"@cli":
+  - cli/*
+  - cli/*/**
+
+"@core":
+  - core/*
+  - core/*/**
+
 "@code":
-  - src/*
-  - src/*/**
+  - '*/src/*'
+  - '*/src/*/**'
 
 "@docs":
   - docs/*
