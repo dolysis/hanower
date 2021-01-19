@@ -42,11 +42,10 @@ impl Interval {
         if number < self.low() || number >= self.high() {
             return None;
         }
-    
-        let bucket = f64::ln(number - self.low() + 1.0)
-            / f64::ln(self.high() - self.low() + 1.0)
+
+        let bucket = f64::ln(number - self.low() + 1.0) / f64::ln(self.high() - self.low() + 1.0)
             * self.count() as f64;
-    
+
         Some(bucket.trunc() as usize)
     }
 
