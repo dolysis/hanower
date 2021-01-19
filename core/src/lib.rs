@@ -13,8 +13,8 @@ pub struct Interval {
 }
 
 impl Interval {
-    /// Create a new Interval, with the range `low..=high`, split into `count`
-    /// number of intervals
+    /// Create a new Interval, with the range `low..=high`,
+    /// split into `count` number of intervals
     pub fn new(low: f64, high: f64, count: u64) -> Result<Self, IntervalError> {
         if low >= high {
             Err(IntervalError::InvalidRange)
@@ -37,13 +37,26 @@ impl Interval {
         self.count
     }
 
+    /// Find the bucket of a given index
+    pub fn bucket(&self, number: f64) -> Option<usize> {
+        if number < self.low() || number >= self.high() {
+            return None;
+        }
+    
+        let bucket = f64::ln(number - self.low() + 1.0)
+            / f64::ln(self.high() - self.low() + 1.0)
+            * self.count() as f64;
+    
+        Some(bucket.trunc() as usize)
+    }
+
     /// Return an iterator of lazily evaluated intervals, starting from this
     /// Interval's low value up to and including the high value
     pub fn iter(&self) -> IntervalIter {
         self.new_iter()
     }
 
-    /// Returns an iterator of lazily evaluated intervals based on the
+    /// Return an iterator of lazily evaluated intervals based on the
     /// low and high points of this Interval
     pub fn intervals(&self) -> IntervalIter {
         let mut iter = self.new_iter();
@@ -362,5 +375,40 @@ mod tests {
                 ],
             ),
         ]
+    }
+
+    // tests the bucket method of Interval
+    #[test]
+    fn test_bucket() {
+        let data = vec![
+            TestData::new(Interval::new(1.0, 10.0, 5).unwrap(), 8.0, Some(4)),
+            TestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 1000.0, None),
+            TestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 0.0, None),
+            TestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 10.0 * 10.0, None),
+            TestData::new(Interval::new(-100.0, 100.0, 10).unwrap(), 0.0, Some(8)),
+            TestData::new(Interval::new(-100.0, 100.0, 10).unwrap(), -100.0, Some(0)),
+        ];
+
+        for test in data {
+            let actual = Interval::bucket(&test.interval, test.number);
+
+            assert_eq!(test.expected, actual)
+        }
+    }
+
+    struct TestData {
+        interval: Interval,
+        number: f64,
+        expected: Option<usize>,
+    }
+
+    impl TestData {
+        fn new(interval: Interval, number: f64, expected: Option<usize>) -> Self {
+            Self {
+                interval,
+                number,
+                expected,
+            }
+        }
     }
 }
