@@ -38,7 +38,7 @@ where
     let mut buckets: Vec<Option<i64>> = interval.iter().map(|_| None).collect();
 
     for item in input.into_iter() {
-        Interval::bucket(interval, item as f64).and_then(|bucket| {
+        interval.bucket(item as f64).and_then(|bucket| {
             buckets
                 .get_mut(bucket)
                 .filter(|current| select(item, **current))

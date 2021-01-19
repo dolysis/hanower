@@ -338,7 +338,43 @@ mod tests {
         Ok(())
     }
 
-    /* --- HELPER FUNCTIONS -- */
+    // tests the bucket method of Interval
+    #[test]
+    fn interval_bucket_method() {
+        let data = vec![
+            BucketTestData::new(Interval::new(1.0, 10.0, 5).unwrap(), 8.0, Some(4)),
+            BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 1000.0, None),
+            BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 0.0, None),
+            BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 10.0 * 10.0, None),
+            BucketTestData::new(Interval::new(-100.0, 100.0, 10).unwrap(), 0.0, Some(8)),
+            BucketTestData::new(Interval::new(-100.0, 100.0, 10).unwrap(), -100.0, Some(0)),
+        ];
+
+        for test in data {
+            let actual = Interval::bucket(&test.interval, test.number);
+
+            assert_eq!(test.expected, actual)
+        }
+    }
+
+    /* --- HELPER STRUCTS & IMPLEMENTATIONS --- */
+    struct BucketTestData {
+        interval: Interval,
+        number: f64,
+        expected: Option<usize>,
+    }
+
+    impl BucketTestData {
+        fn new(interval: Interval, number: f64, expected: Option<usize>) -> Self {
+            Self {
+                interval,
+                number,
+                expected,
+            }
+        }
+    }
+
+    /* --- HELPER FUNCTIONS --- */
 
     fn assert_output_length(actual: usize, expected: usize) -> TestResult {
         if let false = actual == expected {
@@ -374,40 +410,5 @@ mod tests {
                 ],
             ),
         ]
-    }
-
-    // tests the bucket method of Interval
-    #[test]
-    fn test_bucket() {
-        let data = vec![
-            TestData::new(Interval::new(1.0, 10.0, 5).unwrap(), 8.0, Some(4)),
-            TestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 1000.0, None),
-            TestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 0.0, None),
-            TestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 10.0 * 10.0, None),
-            TestData::new(Interval::new(-100.0, 100.0, 10).unwrap(), 0.0, Some(8)),
-            TestData::new(Interval::new(-100.0, 100.0, 10).unwrap(), -100.0, Some(0)),
-        ];
-
-        for test in data {
-            let actual = Interval::bucket(&test.interval, test.number);
-
-            assert_eq!(test.expected, actual)
-        }
-    }
-
-    struct TestData {
-        interval: Interval,
-        number: f64,
-        expected: Option<usize>,
-    }
-
-    impl TestData {
-        fn new(interval: Interval, number: f64, expected: Option<usize>) -> Self {
-            Self {
-                interval,
-                number,
-                expected,
-            }
-        }
     }
 }
