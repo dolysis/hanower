@@ -8,15 +8,19 @@
 use super::*;
 use structopt::clap::AppSettings::AllowLeadingHyphen;
 
+/// Finds the `count` number of intervals in a range from `low` to `high`
 #[derive(Debug, StructOpt)]
 #[structopt(setting = AllowLeadingHyphen)]
 pub struct SubComInterval {
+    /// Number of intervals, minimum of 2
     #[structopt(long, default_value = "2")]
     count: u64,
 
+    /// Start point of section from which to find intervals
     #[structopt(allow_hyphen_values = true)]
     low: i64,
 
+    /// End point of section from which to find intervals
     #[structopt(allow_hyphen_values = true)]
     high: i64,
 }
@@ -33,10 +37,9 @@ impl Runner for SubComInterval {
         let high = self.high as f64;
 
         let interval = core::Interval::new(low, high, self.count)?;
-        let output: Vec<f64> = interval.intervals().collect();
 
-        for &number in &output {
-            write!(dst, "{} ", number.round())?;
+        for number in interval.intervals().map(|f| f.round() as i64) {
+            write!(dst, "{} ", number)?;
         }
         writeln!(dst)?;
 
