@@ -8,6 +8,8 @@
 use crate::{config::Options, run::Runner};
 use structopt::StructOpt;
 
+mod interval;
 mod range;
 
+pub use interval::SubComInterval;
 pub use range::Range;

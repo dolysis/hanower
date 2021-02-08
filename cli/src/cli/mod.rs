@@ -7,6 +7,8 @@
 
 mod subcommand;
 
+// use core::Interval;
+
 use crate::{config::Options, run::Runner};
 use structopt::StructOpt;
 
@@ -32,6 +34,7 @@ impl Root {
 #[derive(Debug, StructOpt)]
 enum Command {
     Range(subcommand::Range),
+    Interval(subcommand::SubComInterval),
 }
 
 impl Runner for Command {
@@ -44,6 +47,7 @@ impl Runner for Command {
     ) -> Result<(), color_eyre::eyre::Report> {
         match self {
             Self::Range(cmd) => cmd.run(dst, config),
+            Self::Interval(cmd) => cmd.run(dst, config),
         }
     }
 }
