@@ -1,6 +1,6 @@
 [package]
-name = "hanoi"
-version = "0.2.0"
+name = "hanower"
+version = "0.2.1"
 authors = ["emucc <github@elrimer.com>"]
 edition = "2018"
 
