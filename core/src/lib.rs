@@ -1,11 +1,13 @@
-// This Source Code Form is subject to the terms of
-// the Mozilla Public License, v. 2.0. If a copy of
-// the MPL was not distributed with this file, You
-// can obtain one at http://mozilla.org/MPL/2.0/.
+/*
+ * This Source Code Form is subject to the terms of
+ * the Mozilla Public License, v. 2.0. If a copy of
+ * the MPL was not distributed with this file, You
+ * can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 
 //! hanower is a CLI which calculates logarithmic or exponential backoffs from user input values.
 
-#![deny(missing_docs)]
+//#![deny(missing_docs)]
 
 use std::fmt;
 
@@ -57,7 +59,7 @@ impl Interval {
     ///
     /// For example, say we have values of `low = 1`, `high = 10`, and `count = 5`,
     /// and want to know which bucket the number `8` would be in. The output intervals
-    /// would be `2 3 4 6 10`. The first bucket is then `1..<3`, next `3..<4`, etc.
+    /// would be `2 3 4 6 10`. The first bucket is then `2..<3`, next `3..<4`, etc.
     /// So, `8` is in the fourth bucket, between `6` and `10`.
     pub fn bucket(&self, number: f64) -> Option<usize> {
         if number < self.low() || number >= self.high() {
@@ -70,6 +72,45 @@ impl Interval {
         Some(dbg!(bucket).trunc() as usize)
     }
 
+    /// If a value is matched in a bucket, it adds the value to in_buckets.
+    /// If a value is not matched in a bucket, it is skipped.
+    ///
+    /// Iterates through a given list of numbers, and finds the appropriate
+    /// matching value from the vec of resultant interval values.
+    ///     - you can search for the first, last or average values that fit into a bucket
+    pub fn in_list(&self, mut list: Vec<i64>) -> Option<Vec<i64>> {
+        // ensures buckets are in order
+        // maybe remove this, add error handling for this to the arg itself (when arg is added)?
+        list.sort();
+
+        // --- calculating resultant interval values ---
+        let mut interval_values: Vec<i64> = vec![];
+
+        for number in self.intervals().map(|f| f.round() as i64) {
+            interval_values.push(number);
+        }
+
+        // --- calculating which resultant values fit the specified requirements ---
+        let in_buckets: Vec<i64> = vec![];
+
+        // for value in list {
+        //     if value == list.last()? {}
+        // }
+
+        // for value in list {
+        //     match value {
+        //         list.last() => return Some(in_buckets),
+        //         _ => print("ohhh boy"),
+        //     }
+        // }
+
+        if in_buckets == vec![] {
+            None
+        } else {
+            Some(in_buckets)
+        }
+    }
+
     /// Returns an iterator of lazily evaluated intervals, starting from this
     /// Interval's `low` value up to and including the `high` value.
     pub fn iter(&self) -> IntervalIter {
@@ -77,7 +118,7 @@ impl Interval {
     }
 
     /// Returns an iterator of lazily evaluated intervals based on the
-    /// `low` and `high points` of this Interval.
+    /// `low` and `high points` of this Interval, and skips the floor value.
     pub fn intervals(&self) -> IntervalIter {
         let mut iter = self.new_iter();
 
@@ -371,7 +412,7 @@ mod tests {
     #[test]
     fn interval_bucket_method() {
         let data = vec![
-            BucketTestData::new(Interval::new(1.0, 10.0, 5).unwrap(), 6.0, Some(4)),
+            BucketTestData::new(Interval::new(1.0, 10.0, 5).unwrap(), 7.0, Some(4)),
             BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 1000.0, None),
             BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 0.0, None),
             BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 10.0 * 10.0, None),
@@ -384,6 +425,15 @@ mod tests {
 
             assert_eq!(test.expected, actual)
         }
+    }
+
+    #[test]
+    fn first_in_buckets() {
+        let expected: Option<Vec<i64>> = Some(vec![24, 46, 67]);
+        let interval = Interval::new(10.0, 100.0, 10).unwrap();
+        let actual = interval.in_list(vec![20, 40, 100, 60]);
+
+        assert_eq!(expected, actual)
     }
 
     /* --- HELPER STRUCTS & IMPLEMENTATIONS --- */
