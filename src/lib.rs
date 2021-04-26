@@ -5,6 +5,7 @@
  * can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+//! WIP see README⚠️
 //! hanower is a CLI which calculates exponential backoffs from user input values.
 
 //#![deny(missing_docs)]

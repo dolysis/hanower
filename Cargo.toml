@@ -1,10 +1,10 @@
 [package]
 name = "hanower"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Bazaah <github@luxolus.com>", "emucc <github@elrimer.com>"]
 edition = "2018"
 license = "MPL-2.0"
-description = "CLI which calculates logarithmic or exponential backoffs from user input values"
+description = "WIP⚠️ CLI which calculates logarithmic or exponential backoffs from user input values"
 repository = "https://github.com/dolysis/hanower"
 documentation = "https://docs.rs/hanower"
 readme = "docs/README.md"
