@@ -7,7 +7,7 @@ license = "MPL_2_0"
 description = "CLI which calculates logarithmic or exponential backoffs from user input values"
 repository = "https://github.com/dolysis/hanower"
 documentation = "https://docs.rs/hanower"
-readme = "docs/README.md"
+readme = "../docs/README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
