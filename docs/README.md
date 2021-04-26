@@ -1,5 +1,9 @@
 # Hanower
 
+## Warning &#9888;
+
+WIP: This code is incomplete and contains some bugs.
+
 ## License
 
 Licensed under [MPL License Version 2.0](https://www.mozilla.org/en-US/MPL/2.0/)
