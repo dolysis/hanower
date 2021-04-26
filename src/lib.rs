@@ -1,10 +1,22 @@
-// This Source Code Form is subject to the terms of
-// the Mozilla Public License, v. 2.0. If a copy of
-// the MPL was not distributed with this file, You
-// can obtain one at http://mozilla.org/MPL/2.0/.
+/*
+ * This Source Code Form is subject to the terms of
+ * the Mozilla Public License, v. 2.0. If a copy of
+ * the MPL was not distributed with this file, You
+ * can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+//! hanower is a CLI which calculates exponential backoffs from user input values.
+
+//#![deny(missing_docs)]
 
 use std::fmt;
 
+/// Used to create and work with intervals which are calculated from the user-input CLI values.
+///
+/// - `low` is the starting point of the section from which to find intervals
+/// - `high` is the inclusive end point of the section from which to find intervals
+/// - `count` is the total number of desired intervals to be calculated
+///    - must be a minimum of 2 (`low` and `high`)
 #[derive(Debug, Clone, Copy)]
 pub struct Interval {
     low: f64,
@@ -13,8 +25,8 @@ pub struct Interval {
 }
 
 impl Interval {
-    /// Create a new Interval, with the range `low..=high`,
-    /// split into `count` number of intervals
+    /// Creates a new Interval, with the range `low..=high`,
+    /// split into `count` number of intervals.
     pub fn new(low: f64, high: f64, count: u64) -> Result<Self, IntervalError> {
         if low >= high {
             Err(IntervalError::InvalidRange)
@@ -25,19 +37,30 @@ impl Interval {
         }
     }
 
+    /// Returns the `low` value.
     pub fn low(&self) -> f64 {
         self.low
     }
 
+    /// Returns the `high` value.
     pub fn high(&self) -> f64 {
         self.high
     }
 
+    /// Returns the `count` value.
     pub fn count(&self) -> u64 {
         self.count
     }
 
-    /// Find the bucket of a given index
+    // TODO: fix floating point accuracy bug
+    /// Finds the bucket a given value exists in.
+    ///
+    /// A bucket refers to a range between two values, and including the starting value.
+    ///
+    /// For example, say we have values of `low = 1`, `high = 10`, and `count = 5`,
+    /// and want to know which bucket the number `8` would be in. The output intervals
+    /// would be `2 3 4 6 10`. The first bucket is then `2..<3`, next `3..<4`, etc.
+    /// So, `8` is in the fourth bucket, between `6` and `10`.
     pub fn bucket(&self, number: f64) -> Option<usize> {
         if number < self.low() || number >= self.high() {
             return None;
@@ -46,17 +69,48 @@ impl Interval {
         let bucket = f64::ln(number - self.low() + 1.0) / f64::ln(self.high() - self.low() + 1.0)
             * self.count() as f64;
 
-        Some(bucket.trunc() as usize)
+        Some(dbg!(bucket).trunc() as usize)
     }
 
-    /// Return an iterator of lazily evaluated intervals, starting from this
-    /// Interval's low value up to and including the high value
+    // /// Iterates through a given list of numbers, and finds the appropriate
+    // /// matching value from the vec of resultant interval values.
+    // ///     - you can search for the first, last or average values that fit into a bucket
+    // pub fn in_list(&self, mut list: Vec<i64>) -> Option<Vec<i64>> {
+    //     // ensures buckets are in order
+    //     // maybe remove this, add error handling for this to the arg itself (when arg is added)?
+    //     list.sort();
+
+    //     // --- calculating resultant interval values ---
+    //     let mut interval_values: Vec<i64> = vec![];
+
+    //     for number in self.intervals().map(|f| f.round() as i64) {
+    //         interval_values.push(number);
+    //     }
+
+    //     // --- calculating which resultant values fit the specified requirements ---
+    //     let in_buckets: Vec<i64> = vec![];
+
+    //     // for value in list
+    //     //  if value == list.last()
+    //     //      return in_buckets
+    //     //  else
+    //     //
+
+    //     if in_buckets == vec![] {
+    //         None
+    //     } else {
+    //         Some(in_buckets)
+    //     }
+    // }
+
+    /// Returns an iterator of lazily evaluated intervals, starting from this
+    /// Interval's `low` value up to and including the `high` value.
     pub fn iter(&self) -> IntervalIter {
         self.new_iter()
     }
 
-    /// Return an iterator of lazily evaluated intervals based on the
-    /// low and high points of this Interval
+    /// Returns an iterator of lazily evaluated intervals based on the
+    /// `low` and `high points` of this Interval, and skips the floor value.
     pub fn intervals(&self) -> IntervalIter {
         let mut iter = self.new_iter();
 
@@ -74,6 +128,13 @@ impl Interval {
     }
 }
 
+/// An iterator version of the [`Interval`] struct, which calculates intervals from the user-input CLI values.
+///
+/// - `low` is the starting point of the section from which to find intervals
+/// - `high` is the inclusive end point of the section from which to find intervals
+/// - `count` is the total number of desired intervals to be calculated
+///    - must be a minimum of 2 (`low` and `high`)
+/// - `idx_front` and `idx_back` are used to keep track of where the iterator is
 #[derive(Debug, Clone)]
 pub struct IntervalIter {
     low: f64,
@@ -102,8 +163,8 @@ impl IntervalIter {
     }
 
     fn calculate_interval(&self, index: u64) -> f64 {
-        // scale high value down according to low value
-        // low must always move down to 1.0
+        // scales `high` value down according to `low` value
+        // `low` must always move down to 1.0
         let nlog = (self.high - self.low + 1.0).ln() / self.count as f64;
         let expo = (nlog * index as f64).exp();
 
@@ -135,7 +196,7 @@ impl Iterator for IntervalIter {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        // Because we iterate over low *and* `count` number
+        // Because we iterate over `low` *and* `count` number
         // of intervals we need to add one
         let len = (self.count + 1) - self.idx();
         let len = len as usize;
@@ -175,11 +236,12 @@ impl ExactSizeIterator for IntervalIter {}
 
 impl std::iter::FusedIterator for IntervalIter {}
 
+/// Error kinds for command line arguments.
 #[derive(Debug)]
 pub enum IntervalError {
-    /// The given count does not satisfy the requirements
+    /// Occurs when the user provides a `count` value below 2.
     LowCount(u64),
-    /// The given high and low points were invalid
+    /// Occurs when the user gives a `low` value >= `high`.
     InvalidRange,
 }
 
@@ -279,7 +341,7 @@ mod tests {
     #[test]
     /// Runs the program's computed intervals against a series of precomputed data sets,
     /// checking that all of the actual outputs match the expected values
-    fn hanoi_algorithm_iter() -> TestResult {
+    fn hanower_algorithm_iter() -> TestResult {
         // For each set of args and precomputed outputs
         for (args, expected_list) in test_data().into_iter() {
             // Generate the actual outputs
@@ -311,7 +373,7 @@ mod tests {
     }
 
     #[test]
-    fn hanoi_algorithm_iter_back() -> TestResult {
+    fn hanower_algorithm_iter_back() -> TestResult {
         for (interval, expected_list) in test_data().into_iter() {
             let actual_list: IntervalIter = interval.intervals();
 
@@ -342,7 +404,7 @@ mod tests {
     #[test]
     fn interval_bucket_method() {
         let data = vec![
-            BucketTestData::new(Interval::new(1.0, 10.0, 5).unwrap(), 8.0, Some(4)),
+            BucketTestData::new(Interval::new(1.0, 10.0, 5).unwrap(), 7.0, Some(4)),
             BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 1000.0, None),
             BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 0.0, None),
             BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 10.0 * 10.0, None),
@@ -356,6 +418,15 @@ mod tests {
             assert_eq!(test.expected, actual)
         }
     }
+
+    // #[test]
+    // fn first_in_buckets() {
+    //     let expected: Option<Vec<i64>> = Some(vec![24, 46, 67]);
+    //     let interval = Interval::new(10.0, 100.0, 10).unwrap();
+    //     let actual = interval.in_list(vec![20, 40, 100, 60]);
+
+    //     assert_eq!(expected, actual)
+    // }
 
     /* --- HELPER STRUCTS & IMPLEMENTATIONS --- */
     struct BucketTestData {
@@ -386,7 +457,7 @@ mod tests {
         Ok(())
     }
 
-    // helper function for `hanoi_algorithm_iter` test
+    // helper function for `hanower_algorithm_iter` test
     // unwrap helps validate that the input data (Interval::new) is correct for test
     fn test_data() -> Vec<(Interval, Vec<i64>)> {
         vec![

@@ -40,7 +40,7 @@ impl Runner for Range {
         dst: &mut dyn std::io::Write,
         _config: Option<Self::Config>,
     ) -> Result<(), color_eyre::eyre::Report> {
-        let interval = core::Interval::new(self.start as f64, self.end as f64, self.count)?;
+        let interval = hanower::Interval::new(self.start as f64, self.end as f64, self.count)?;
 
         let output = if self.max_by_bucket {
             ByBucket::new(interval).select_max(self.range.iter().copied())

@@ -122,14 +122,7 @@ name = "hanower"
 version = "0.2.1"
 dependencies = [
  "anyhow",
-]
-
-[[package]]
-name = "hanower-cli"
-version = "0.1.1"
-dependencies = [
  "color-eyre",
- "hanower",
  "structopt",
 ]
 
