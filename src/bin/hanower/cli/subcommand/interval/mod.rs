@@ -36,7 +36,7 @@ impl Runner for SubComInterval {
         let low = self.low as f64;
         let high = self.high as f64;
 
-        let interval = core::Interval::new(low, high, self.count)?;
+        let interval = hanower::Interval::new(low, high, self.count)?;
 
         for number in interval.intervals().map(|f| f.round() as i64) {
             write!(dst, "{} ", number)?;

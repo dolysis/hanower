@@ -5,7 +5,7 @@
  * can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use core::Interval;
+use hanower::Interval;
 
 #[derive(Debug)]
 pub(super) struct ByBucket {
