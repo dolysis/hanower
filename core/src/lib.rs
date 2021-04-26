@@ -5,7 +5,7 @@
  * can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-//! hanower is a CLI which calculates logarithmic or exponential backoffs from user input values.
+//! hanower is a CLI which calculates exponential backoffs from user input values.
 
 //#![deny(missing_docs)]
 
@@ -72,44 +72,36 @@ impl Interval {
         Some(dbg!(bucket).trunc() as usize)
     }
 
-    /// If a value is matched in a bucket, it adds the value to in_buckets.
-    /// If a value is not matched in a bucket, it is skipped.
-    ///
-    /// Iterates through a given list of numbers, and finds the appropriate
-    /// matching value from the vec of resultant interval values.
-    ///     - you can search for the first, last or average values that fit into a bucket
-    pub fn in_list(&self, mut list: Vec<i64>) -> Option<Vec<i64>> {
-        // ensures buckets are in order
-        // maybe remove this, add error handling for this to the arg itself (when arg is added)?
-        list.sort();
+    // /// Iterates through a given list of numbers, and finds the appropriate
+    // /// matching value from the vec of resultant interval values.
+    // ///     - you can search for the first, last or average values that fit into a bucket
+    // pub fn in_list(&self, mut list: Vec<i64>) -> Option<Vec<i64>> {
+    //     // ensures buckets are in order
+    //     // maybe remove this, add error handling for this to the arg itself (when arg is added)?
+    //     list.sort();
 
-        // --- calculating resultant interval values ---
-        let mut interval_values: Vec<i64> = vec![];
+    //     // --- calculating resultant interval values ---
+    //     let mut interval_values: Vec<i64> = vec![];
 
-        for number in self.intervals().map(|f| f.round() as i64) {
-            interval_values.push(number);
-        }
+    //     for number in self.intervals().map(|f| f.round() as i64) {
+    //         interval_values.push(number);
+    //     }
 
-        // --- calculating which resultant values fit the specified requirements ---
-        let in_buckets: Vec<i64> = vec![];
+    //     // --- calculating which resultant values fit the specified requirements ---
+    //     let in_buckets: Vec<i64> = vec![];
 
-        // for value in list {
-        //     if value == list.last()? {}
-        // }
+    //     // for value in list
+    //     //  if value == list.last()
+    //     //      return in_buckets
+    //     //  else
+    //     //
 
-        // for value in list {
-        //     match value {
-        //         list.last() => return Some(in_buckets),
-        //         _ => print("ohhh boy"),
-        //     }
-        // }
-
-        if in_buckets == vec![] {
-            None
-        } else {
-            Some(in_buckets)
-        }
-    }
+    //     if in_buckets == vec![] {
+    //         None
+    //     } else {
+    //         Some(in_buckets)
+    //     }
+    // }
 
     /// Returns an iterator of lazily evaluated intervals, starting from this
     /// Interval's `low` value up to and including the `high` value.
@@ -427,14 +419,14 @@ mod tests {
         }
     }
 
-    #[test]
-    fn first_in_buckets() {
-        let expected: Option<Vec<i64>> = Some(vec![24, 46, 67]);
-        let interval = Interval::new(10.0, 100.0, 10).unwrap();
-        let actual = interval.in_list(vec![20, 40, 100, 60]);
+    // #[test]
+    // fn first_in_buckets() {
+    //     let expected: Option<Vec<i64>> = Some(vec![24, 46, 67]);
+    //     let interval = Interval::new(10.0, 100.0, 10).unwrap();
+    //     let actual = interval.in_list(vec![20, 40, 100, 60]);
 
-        assert_eq!(expected, actual)
-    }
+    //     assert_eq!(expected, actual)
+    // }
 
     /* --- HELPER STRUCTS & IMPLEMENTATIONS --- */
     struct BucketTestData {
