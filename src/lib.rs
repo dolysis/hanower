@@ -167,10 +167,15 @@ impl IntervalIter {
     fn calculate_interval(&self, index: u64) -> f64 {
         // scales `high` value down according to `low` value
         // `low` must always move down to 1.0
-        let nlog = (self.high - self.low).ln_1p() / self.count as f64;
-        let expo = (nlog * index as f64).exp();
-
-        expo + self.low - 1.0
+        match index {
+            0 => self.low,
+            i if i == self.count => self.high,
+            _ => {
+                let nlog = (self.high - self.low).ln_1p() / self.count as f64;
+                let expo = (nlog * index as f64).exp();
+                ((expo + self.low - 1.0) * 1e12).round() / 1e12
+            }
+        }
     }
 }
 
@@ -477,8 +482,10 @@ mod tests {
     fn test_data() -> Vec<(Interval, Vec<f64>)> {
         vec![
             (
-                Interval::new(1.0, 16.0, 4).unwrap(),
-                vec![1.0, 2.0, 4.0, 7.999999999999, 16.0],
+                Interval::new(1.0, 1024.0, 10).unwrap(),
+                vec![
+                    1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0,
+                ],
             ),
             (
                 Interval::new(100.0, 1000.0, 15).unwrap(),
@@ -498,7 +505,7 @@ mod tests {
                     330.089297730963,
                     462.715228898856,
                     671.457353204472,
-                    999.999999999999,
+                    1000.0,
                 ],
             ),
             (

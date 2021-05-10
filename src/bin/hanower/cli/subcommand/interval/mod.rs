@@ -40,8 +40,13 @@ impl Runner for SubComInterval {
 
         //for number in interval.intervals().map(|f| f.round() as i64) {
         for number in interval.intervals() {
-            let res = number - (number * 1e12).trunc() / 1e12;
-            write!(dst, "{} ", number - res)?;
+            //let res = number.abs() - number.round().abs();
+            //dbg!(res);
+            //if (res / number).abs() < 1e-9 {
+            //    write!(dst, "{:.0} ", number.round())?
+            //} else {
+            write!(dst, "{} ", number)?
+            //}
         }
         writeln!(dst)?;
 
