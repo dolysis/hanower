@@ -67,10 +67,10 @@ impl Interval {
             return None;
         }
 
-        let bucket = f64::ln(number - self.low() + 1.0) / f64::ln(self.high() - self.low() + 1.0)
-            * self.count() as f64;
+        let bucket = f64::ln_1p(number - self.low())
+            / (f64::ln_1p(self.high() - self.low()) / self.count() as f64);
 
-        Some(dbg!(bucket).trunc() as usize)
+        dbg!(Some(dbg!(bucket).trunc() as usize))
     }
 
     // /// Iterates through a given list of numbers, and finds the appropriate
@@ -166,7 +166,7 @@ impl IntervalIter {
     fn calculate_interval(&self, index: u64) -> f64 {
         // scales `high` value down according to `low` value
         // `low` must always move down to 1.0
-        let nlog = (self.high - self.low + 1.0).ln() / self.count as f64;
+        let nlog = (self.high - self.low).ln_1p() / self.count as f64;
         let expo = (nlog * index as f64).exp();
 
         expo + self.low - 1.0
@@ -405,7 +405,8 @@ mod tests {
     #[test]
     fn interval_bucket_method() {
         let data = vec![
-            BucketTestData::new(Interval::new(1.0, 10.0, 5).unwrap(), 7.0, Some(4)),
+            BucketTestData::new(Interval::new(1.0, 10.0, 5).unwrap(), 6.3095, Some(3)),
+            BucketTestData::new(Interval::new(1.0, 10.0, 5).unwrap(), 6.3096, Some(4)),
             BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 1000.0, None),
             BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 0.0, None),
             BucketTestData::new(Interval::new(30.0, 100.0, 10).unwrap(), 10.0 * 10.0, None),
