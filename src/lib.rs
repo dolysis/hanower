@@ -17,7 +17,7 @@ use std::fmt;
 /// - `low` is the starting point of the section from which to find intervals
 /// - `high` is the inclusive end point of the section from which to find intervals
 /// - `count` is the total number of desired intervals to be calculated
-///    - must be a minimum of 2 (`low` and `high`)
+///    - must be a minimum of 1 (prints interval of `low` to `high`)
 #[derive(Debug, Clone, Copy)]
 pub struct Interval {
     low: f64,
@@ -31,7 +31,7 @@ impl Interval {
     pub fn new(low: f64, high: f64, count: u64) -> Result<Self, IntervalError> {
         if low >= high {
             Err(IntervalError::InvalidRange)
-        } else if count < 2 {
+        } else if count < 1 {
             Err(IntervalError::LowCount(count))
         } else {
             Ok(Self { low, high, count })
@@ -53,7 +53,6 @@ impl Interval {
         self.count
     }
 
-    // TODO: fix floating point accuracy bug
     /// Finds the bucket a given value exists in.
     ///
     /// A bucket refers to a range between two values, and including the starting value.
@@ -113,17 +112,19 @@ impl Interval {
     /// Returns an iterator of lazily evaluated intervals based on the
     /// `low` and `high points` of this Interval, and skips the floor value.
     pub fn intervals(&self) -> IntervalIter {
-        let mut iter = self.new_iter();
+        // let mut iter = self.new_iter();
 
         // Skip the floor value
-        iter.next();
+        // iter.next();
+
+        let iter = self.new_iter();
 
         iter
     }
 
     fn new_iter(&self) -> IntervalIter {
         debug_assert!(self.low < self.high, "Low must be less than high");
-        debug_assert!(self.count >= 2, "Interval count must be >= 2.");
+        debug_assert!(self.count >= 1, "Interval count must be >= 1.");
 
         IntervalIter::new(self.low, self.high, self.count)
     }
@@ -240,7 +241,7 @@ impl std::iter::FusedIterator for IntervalIter {}
 /// Error kinds for command line arguments.
 #[derive(Debug)]
 pub enum IntervalError {
-    /// Occurs when the user provides a `count` value below 2.
+    /// Occurs when the user provides a `count` value below 1.
     LowCount(u64),
     /// Occurs when the user gives a `low` value >= `high`.
     InvalidRange,
@@ -251,7 +252,7 @@ impl fmt::Display for IntervalError {
         match self {
             Self::LowCount(bad) => write!(
                 f,
-                "Invalid count. Ensure `number` value is >= 2 (was: {})",
+                "Invalid count. Ensure `number` value is >= 1 (was: {})",
                 bad
             ),
             Self::InvalidRange => {
@@ -331,7 +332,7 @@ mod tests {
     #[test]
     /// Checks that the Interval struct correctly detects and refuses invalid count values
     fn count_less_than_two_err() -> TestResult {
-        let args = Interval::new(1.0, 10.0, 1);
+        let args = Interval::new(1.0, 10.0, 0);
 
         // Assert that a bad count leads to an error
         assert!(args.is_err());
@@ -351,13 +352,19 @@ mod tests {
             // For each expected and actual data sets
             actual_list.iter().zip(expected_list.iter()).enumerate().try_for_each(|(idx, (&actual, &expected))| {
                 // Round the actual item
-                let rounded = actual.round() as i64;
+                //let rounded = actual.round() as f64;
 
                 // Check that the rounded item matches the precomputed item
-                if rounded != expected {
+                // if rounded != expected {
+                //     let msg = format!(
+                //         "@{} => Expected {}, received {} ({})\nExpected Values | {:?}\nActual Values  | {:?}",
+                //         idx, expected, rounded, actual, expected_list, actual_list
+                //     );
+
+                if actual != expected {
                     let msg = format!(
-                        "@{} => Expected {}, received {} ({})\nExpected Values | {:?}\nActual Values  | {:?}",
-                        idx, expected, rounded, actual, expected_list, actual_list
+                        "@{} => Expected {}, received {}\nExpected Values | {:?}\nActual Values  | {:?}",
+                        idx, expected, actual, expected_list, actual_list
                     );
 
                     error!(msg);
@@ -380,13 +387,19 @@ mod tests {
 
             interval.intervals().rev().zip(expected_list.iter().rev()).enumerate().try_for_each(|(idx, (actual, &expected))| {
                 // Round the actual item
-                let rounded = actual.round() as i64;
+                //let rounded = actual.round() as i64;
 
                 // Check that the rounded item matches the precomputed item
-                if rounded != expected {
+                // if rounded != expected {
+                //     let msg = format!(
+                //         "@{} => Expected {}, received {} ({})\nExpected Values | {:?}\nActual Values  | {:?}",
+                //         idx, expected, rounded, actual, expected_list, actual_list
+                //     );
+
+                if actual != expected {
                     let msg = format!(
-                        "@{} => Expected {}, received {} ({})\nExpected Values | {:?}\nActual Values  | {:?}",
-                        idx, expected, rounded, actual, expected_list, actual_list
+                        "@{} => Expected {}, received {}\nExpected Values | {:?}\nActual Values  | {:?}",
+                        idx, expected, actual, expected_list, actual_list
                     );
 
                     error!(msg);
@@ -461,25 +474,72 @@ mod tests {
 
     // helper function for `hanower_algorithm_iter` test
     // unwrap helps validate that the input data (Interval::new) is correct for test
-    fn test_data() -> Vec<(Interval, Vec<i64>)> {
+    fn test_data() -> Vec<(Interval, Vec<f64>)> {
         vec![
-            (Interval::new(1.0, 16.0, 4).unwrap(), vec![2, 4, 8, 16]),
+            (
+                Interval::new(1.0, 16.0, 4).unwrap(),
+                vec![1.0, 2.0, 4.0, 7.999999999999, 16.0],
+            ),
             (
                 Interval::new(100.0, 1000.0, 15).unwrap(),
                 vec![
-                    101, 101, 103, 105, 109, 114, 123, 137, 158, 192, 246, 330, 463, 671, 1000,
+                    100.0,
+                    100.57391637116,
+                    101.477212743408,
+                    102.898925691699,
+                    105.136582976105,
+                    108.65846840908,
+                    114.201621549392,
+                    122.926081024782,
+                    136.657650622629,
+                    158.269992814417,
+                    192.286012009204,
+                    245.824381501606,
+                    330.089297730963,
+                    462.715228898856,
+                    671.457353204472,
+                    999.999999999999,
                 ],
             ),
             (
                 Interval::new(3.0, 72.0, 9).unwrap(),
-                vec![4, 5, 6, 9, 13, 19, 29, 46, 72],
+                vec![
+                    3.0,
+                    3.603285605126,
+                    4.570524731607,
+                    6.121285299808,
+                    8.607597395804,
+                    12.593865789167,
+                    18.984992522418,
+                    29.231794014381,
+                    45.660343345039,
+                    72.0,
+                ],
             ),
-            (Interval::new(-19.0, 12.0, 3).unwrap(), vec![-17, -10, 12]),
+            (
+                Interval::new(-19.0, 12.0, 3).unwrap(),
+                vec![-19.0, -16.825197896063, -9.920631600841, 12.0],
+            ),
             (
                 Interval::new(-11000.0, -1200.0, 16).unwrap(),
                 vec![
-                    -10999, -10998, -10995, -10991, -10983, -10970, -10945, -10902, -10825, -10689,
-                    -10446, -10016, -9252, -7894, -5483, -1200,
+                    -11000.0,
+                    -10999.22395322541,
+                    -10997.84565785447,
+                    -10995.39774080648,
+                    -10991.050125628934,
+                    -10983.328557715697,
+                    -10969.614691928618,
+                    -10945.258224830322,
+                    -10902.0,
+                    -10825.171369315636,
+                    -10688.72012759254,
+                    -10446.376339841498,
+                    -10015.962437264447,
+                    -9251.52721385398,
+                    -7893.854500933185,
+                    -5482.564258201986,
+                    -1200.000000000001,
                 ],
             ),
         ]
