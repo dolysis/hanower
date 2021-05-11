@@ -121,9 +121,7 @@ impl Interval {
         // Skip the floor value
         // iter.next();
 
-        let iter = self.new_iter();
-
-        iter
+        self.new_iter()
     }
 
     fn new_iter(&self) -> IntervalIter {
