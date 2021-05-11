@@ -6,7 +6,11 @@
  */
 
 use super::*;
+use hanower::SIGNIFICANT;
 use structopt::clap::AppSettings::AllowLeadingHyphen;
+
+// Helps handle Rust's odd floating point support
+const WORKAROUND: f64 = SIGNIFICANT / 1e3;
 
 /// Finds the `count` number of intervals in a range from `low` to `high`
 #[derive(Debug, StructOpt)]
@@ -42,8 +46,8 @@ impl Runner for SubComInterval {
         for number in interval.intervals() {
             let res = number.abs() - number.round().abs();
             // dbg!(res);
-            // Work around for rust's atrocious floating point support
-            if (res / number).abs() < 1e-9 {
+            // Work around for Rust's atrocious floating point support
+            if (res / number).abs() < WORKAROUND {
                 write!(dst, "{:.0} ", number.round())?
             } else {
                 write!(dst, "{} ", number)?

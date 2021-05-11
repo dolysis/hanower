@@ -5,10 +5,12 @@
  * can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-//! WIP see README⚠️
-//! hanower is a CLI which calculates exponential backoffs from user input values.
+//! ⚠️ WIP see README | hanower is a CLI which calculates exponential backoffs from user input values.
 
 //#![deny(missing_docs)]
+
+/// Used to keep results to 12 significant decimal places
+pub const SIGNIFICANT: f64 = 1e12;
 
 use std::fmt;
 
@@ -18,6 +20,8 @@ use std::fmt;
 /// - `high` is the inclusive end point of the section from which to find intervals
 /// - `count` is the total number of desired intervals to be calculated
 ///    - must be a minimum of 1 (prints interval of `low` to `high`)
+///
+/// Note: values are rounded to 12 significant decimal places.
 #[derive(Debug, Clone, Copy)]
 pub struct Interval {
     low: f64,
@@ -55,11 +59,11 @@ impl Interval {
 
     /// Finds the bucket a given value exists in.
     ///
-    /// A bucket refers to a range between two values, and including the starting value.
+    /// A bucket refers to a range between two values, and including the starting value (similar to an interval).
     ///
     /// For example, say we have values of `low = 1`, `high = 10`, and `count = 5`,
     /// and want to know which bucket the number `8` would be in. The output intervals
-    /// would be `2 3 4 6 10`. The first bucket is then `2..<3`, next `3..<4`, etc.
+    /// would be `1 2 3 4 6 10`. The first bucket is then `2..<3`, next `3..<4`, etc.
     /// So, `8` is in the fourth bucket, between `6` and `10`.
     pub fn bucket(&self, number: f64) -> Option<usize> {
         if number < self.low() || number >= self.high() {
@@ -110,7 +114,7 @@ impl Interval {
     }
 
     /// Returns an iterator of lazily evaluated intervals based on the
-    /// `low` and `high points` of this Interval, and skips the floor value.
+    /// `low` and `high points` of this Interval.
     pub fn intervals(&self) -> IntervalIter {
         // let mut iter = self.new_iter();
 
@@ -135,7 +139,7 @@ impl Interval {
 /// - `low` is the starting point of the section from which to find intervals
 /// - `high` is the inclusive end point of the section from which to find intervals
 /// - `count` is the total number of desired intervals to be calculated
-///    - must be a minimum of 2 (`low` and `high`)
+///    - must be a minimum of 1 (interval of `low` to `high`)
 /// - `idx_front` and `idx_back` are used to keep track of where the iterator is
 #[derive(Debug, Clone)]
 pub struct IntervalIter {
@@ -173,7 +177,7 @@ impl IntervalIter {
             _ => {
                 let nlog = (self.high - self.low).ln_1p() / self.count as f64;
                 let expo = (nlog * index as f64).exp();
-                ((expo + self.low - 1.0) * 1e12).round() / 1e12
+                ((expo + self.low - 1.0) * SIGNIFICANT).round() / SIGNIFICANT
             }
         }
     }
@@ -295,6 +299,7 @@ mod tests {
     type TestResult = std::result::Result<(), AnyError>;
 
     /*
+     * Outdated:
      * For reference this is how I calculated the expected values in `test_data`:
      *
      *  -- INPUTS
