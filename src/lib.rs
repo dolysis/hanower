@@ -369,7 +369,7 @@ mod tests {
                 //         idx, expected, rounded, actual, expected_list, actual_list
                 //     );
 
-                if actual != expected {
+                if (actual - expected).abs() > f64::EPSILON {
                     let msg = format!(
                         "@{} => Expected {}, received {}\nExpected Values | {:?}\nActual Values  | {:?}",
                         idx, expected, actual, expected_list, actual_list
@@ -404,7 +404,7 @@ mod tests {
                 //         idx, expected, rounded, actual, expected_list, actual_list
                 //     );
 
-                if actual != expected {
+                if (actual - expected).abs() > f64::EPSILON {
                     let msg = format!(
                         "@{} => Expected {}, received {}\nExpected Values | {:?}\nActual Values  | {:?}",
                         idx, expected, actual, expected_list, actual_list
