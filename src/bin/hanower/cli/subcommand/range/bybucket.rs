@@ -46,5 +46,6 @@ where
         });
     }
 
+    #[allow(clippy::filter_map_identity)]
     buckets.into_iter().filter_map(|opt| opt).collect()
 }

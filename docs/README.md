@@ -2,7 +2,7 @@
 
 ## Warning &#9888;
 
-WIP: This code is incomplete and contains some bugs.
+WIP: This code is incomplete but subcommand `interval` is usable with current functionality.
 
 ## License
 
